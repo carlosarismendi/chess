@@ -78,7 +78,7 @@ class Board {
             const idx = this.#fileAndRankToIdx(file, rank)
             this.pieces[idx] = new Piece({ type: PIECES.EMPTY, file: file, rank: rank, color: null })
             this.pieces[idx].element.setAttribute('draggable', 'false')
-            // this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this, idx))
+            this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this, idx))
             this.pieces[idx].element.addEventListener('dragover', this.#allowDrop.bind(this.pieces[idx]))
             this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this, idx))
 
