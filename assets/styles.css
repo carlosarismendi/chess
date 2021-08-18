@@ -36,6 +36,13 @@ body {
   height: 100%;
 }
 
+.board-cell.legal-move{
+  background-repeat: no-repeat;
+  background-size: 50% 50%;
+  background-position: center;
+  background-image: url('legal-move.png')!important;
+}
+
 .board-cell.white {
   background-color: #fff;
 }

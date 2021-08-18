@@ -216,6 +216,8 @@ class Board {
   }
 
   #drag (idxSrc, event) {
+    this.#calcLegalMoves(idxSrc)
+    this.#showLegalMoves(idxSrc)
     event.dataTransfer.setData('text/plain', idxSrc)
     event.dataTransfer.effectAllowed = 'move'
   }
@@ -228,7 +230,8 @@ class Board {
     event.preventDefault();
 
     // Target cell gets data from piece of source cell
-    let idxSrc = event.dataTransfer.getData('text/plain');
+    let idxSrc = parseInt( event.dataTransfer.getData('text/plain') )
+    this.#hideLegalMoves(idxSrc)
     let pieceSrc = this.pieces[idxSrc]
     let pieceDst = this.pieces[idxDst]
 
@@ -237,6 +240,11 @@ class Board {
       return
 
     // TODO: CHECK IF MOVEMENT IS VALID
+    if (!pieceSrc.legalMoves.includes(idxDst))
+      return
+
+    pieceSrc.firstMove = false
+    pieceDst.firstMove = false
 
     // Removes piece from old cell
     pieceSrc.element.classList.remove(pieceSrc.cssClass)
@@ -249,7 +257,106 @@ class Board {
     // Sets reminding properties
     pieceDst.type = pieceSrc.type
     pieceSrc.type = PIECES.EMPTY
+    pieceDst.color = pieceSrc.color
     pieceSrc.element.setAttribute('draggable', 'false')
     pieceDst.element.setAttribute('draggable', 'true')
+
+    // Check if piece is a pawn that has reached promotion ranks
+    if (pieceDst.rank === RANKS.RANK_8 && pieceDst.type === PIECES.WHITE_PAWN)
+      this.#whitePawnPromotion(pieceDst)
+    else if (pieceDst.rank === RANKS.RANK_1 && pieceDst.type === PIECES.BLACK_PAWN)
+      this.#blackPawnPromotion(pieceDst)
+  }
+
+  #calcLegalMoves (pieceIdx) {
+    this.pieces[pieceIdx].legalMoves = []
+
+    switch (this.pieces[pieceIdx].type) {
+      case PIECES.WHITE_PAWN:
+        this.#calcPawnMoves(pieceIdx, PIECE_OFFSETS.WHITE_PAWN)
+        break
+      case PIECES.WHITE_BISHOP:
+        break
+      case PIECES.WHITE_KNIGHT:
+        break
+      case PIECES.WHITE_ROOK:
+        break
+      case PIECES.WHITE_KING:
+        break
+      case PIECES.WHITE_QUEEN:
+        break
+      case PIECES.BLACK_PAWN:
+        break
+      case PIECES.BLACK_BISHOP:
+        break
+      case PIECES.BLACK_KNIGHT:
+        break
+      case PIECES.BLACK_ROOK:
+        break
+      case PIECES.BLACK_KING:
+        break
+      case PIECES.BLACK_QUEEN:
+        break
+    }
+  }
+
+  #calcPawnMoves (pieceIdx, offsets) {
+    /**
+     * CASOS:
+     * - Movement out of board (INVALID)
+     * - Forward movement blocked by a piece (INVALID)
+     * - Forward movement to empty cell (ALLOWED)
+     * - Diagonal movement to empty cell (INVALID)
+     * - Diagonal movement to kill enemy piece (ALLOWED)
+     * - Pawn reaches edge rank of board (for white pawn -> RANK_8 | for black pawn -> RANK_1) (PROMOTION)
+     */
+    let pieceSrc = this.pieces[pieceIdx]
+    offsets.forEach(off => {
+      console.log(`off: ${off}`)
+      let move = off + pieceIdx
+      let pieceDst = this.pieces[move]
+      if (!this.#isInBoard(move)) return // out of board
+
+      // forward move
+      if (off === 8) {
+        if (pieceDst.type !== PIECES.EMPTY) return // forward blocked
+        pieceSrc.legalMoves.push(move)
+
+        move += 8
+        pieceDst = this.pieces[move] // 2 steps forward
+
+        if (pieceSrc.firstMove && pieceDst.type === PIECES.EMPTY && this.#isInBoard(move)) {
+          pieceSrc.legalMoves.push(move)
+        }
+      } else {
+        // Pawn kills enemy piece
+        if (pieceDst.type === PIECES.EMPTY || pieceDst.color === pieceSrc.color) return
+        pieceSrc.legalMoves.push(move)
+      }
+    })
+  }
+
+  #showLegalMoves (pieceIdx) {
+    this.pieces[pieceIdx].legalMoves.forEach(idx => {
+      this.pieces[idx].element.classList.add('legal-move')
+    });
+  }
+
+  #hideLegalMoves (pieceIdx) {
+    this.pieces[pieceIdx].legalMoves.forEach(idx => {
+      this.pieces[idx].element.classList.remove('legal-move')
+    });
+  }
+
+  #isInBoard (idx) {
+    return (idx >= 0 && idx < this.pieces.length)
+  }
+
+  #whitePawnPromotion (piece) {
+    piece.setType(PIECES.WHITE_QUEEN)
+  }
+
+  #blackPawnPromotion (piece) {
+    piece.setType(PIECES.BLACK_QUEEN)
   }
 }

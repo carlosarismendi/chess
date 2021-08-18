@@ -14,6 +14,17 @@ const PIECES = {
   BLACK_QUEEN: 12
 }
 
+// LOOKING BOARD WITH WHITE BELOW
+const PIECE_OFFSETS = {
+  WHITE_PAWN: [7, 8, 9], // up-left, up, up-right
+  BLACK_PAWN: [-7, -8, -9], // down-right, down, down-left
+  BISHOP: [7, -7, 9, -9], // up-left, down-right, up-right, down-left
+  KNIGHT: [7, 16, 18, 11, -6, -10, -15, -17],
+  ROOK: [-1, 8, 1, -8], // left, up, right, down
+  KING: [-1, 7, 8, 9, 1, -7, -8, -9], // left, up-left, up, up-right, right, down-right, down, down-ñeft
+  QUEEN: [-1, 7, 8, 9, 1, -7, -8, -9] // left, up-left, up, up-right, right, down-right, down, down-ñeft
+}
+
 
 class Piece {
   constructor ({ type, file, rank, color }) {
@@ -27,6 +38,15 @@ class Piece {
     this.file = file
     this.rank = rank
     this.color = color
+    this.firstMove = true // only useful for pawns
+    this.legalMoves = []
+  }
+
+  setType (newType) {
+    this.type = newType
+    this.element.classList.remove(this.cssClass)
+    this.cssClass = this.#typeToCSSClass(this.type)
+    this.element.classList.add(this.cssClass)
   }
 
   #typeToCSSClass (type) {
