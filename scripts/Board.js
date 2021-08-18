@@ -60,6 +60,8 @@ class Board {
 
   #initPieces () {
     this.#parseFENNotation('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    // this.#parseFENNotation('rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2')
+    // this.#parseFENNotation('4k3/8/8/8/8/8/4P3/4K3 w - - 5 39')
   }
 
   #parseFENNotation (fen_string) {
@@ -79,6 +81,7 @@ class Board {
             ++file
             --blanks
           }
+          --file
           ++stridx;
           continue
         }
