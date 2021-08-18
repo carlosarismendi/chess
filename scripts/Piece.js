@@ -17,16 +17,57 @@ const PIECES = {
 
 class Piece {
   constructor ({ type, file, rank, color }) {
-    const cell_id = `cell-${String.fromCharCode(65 + file)}${rank+1}`
+    this.cellId = `cell-${String.fromCharCode(65 + file)}${rank+1}`
 
-    this.element = document.querySelector(`#${cell_id}`)
-    this.element.style.color = color == COLORS.WHITE ? 'red' : 'green'
-    this.element.classList.add(this.#typeToCSSClass(type))
+    this.element = document.querySelector(`#${this.cellId}`)
+    this.cssClass = this.#typeToCSSClass(type)
+    this.element.classList.add(this.cssClass)
+    this.element.setAttribute('draggable', 'true')
+    this.element.addEventListener('dragstart', this.#drag.bind(this))
+    this.element.addEventListener('dragover', this.#allowDrop.bind(this))
+    this.element.addEventListener('drop', this.#drop.bind(this))
+
 
     this.type = type
     this.file = file
     this.rank = rank
     this.color = color
+  }
+
+  #drag (event) {
+    event.dataTransfer.setData('text/plain', JSON.stringify(this))
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  #allowDrop (event) {
+    event.preventDefault();
+  }
+
+  #drop (event) {
+    event.preventDefault();
+
+    // Target cell gets data from piece of source cell
+    let piece = event.dataTransfer.getData('text/plain');
+    piece = JSON.parse(piece)
+    piece.element = document.getElementById(piece.cellId)
+
+    // Check that user is not dropping in the same cell
+    if (piece.file === this.file && piece.rank === this.rank)
+      return
+
+    // TODO: CHECK IF MOVEMENT IS VALID
+
+    // Removes piece from old cell
+    piece.element.classList.remove(piece.cssClass)
+
+    // Renders piece in new cell
+    this.element.classList.remove(this.cssClass)
+    this.cssClass = piece.cssClass
+    this.element.classList.add(this.cssClass)
+
+    // Sets reminding properties
+    this.type = piece.type
+    piece.type = PIECES.EMPTY
   }
 
   #typeToCSSClass (type) {
