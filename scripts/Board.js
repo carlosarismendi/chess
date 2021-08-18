@@ -286,6 +286,7 @@ class Board {
       case PIECES.WHITE_QUEEN:
         break
       case PIECES.BLACK_PAWN:
+        this.#calcPawnMoves(pieceIdx, PIECE_OFFSETS.BLACK_PAWN)
         break
       case PIECES.BLACK_BISHOP:
         break
@@ -318,11 +319,11 @@ class Board {
       if (!this.#isInBoard(move)) return // out of board
 
       // forward move
-      if (off === 8) {
+      if (off % 8 === 0) {
         if (pieceDst.type !== PIECES.EMPTY) return // forward blocked
         pieceSrc.legalMoves.push(move)
 
-        move += 8
+        move += off
         pieceDst = this.pieces[move] // 2 steps forward
 
         if (pieceSrc.firstMove && pieceDst.type === PIECES.EMPTY && this.#isInBoard(move)) {
