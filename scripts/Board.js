@@ -77,10 +77,10 @@ class Board {
           while(blanks > 0) {
             const idx = this.#fileAndRankToIdx(file, rank)
             this.pieces[idx] = new Piece({ type: PIECES.EMPTY, file: file, rank: rank, color: null })
-            this.pieces[idx].element.setAttribute('draggable', 'true')
-            this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this.pieces[idx]))
+            this.pieces[idx].element.setAttribute('draggable', 'false')
+            // this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this, idx))
             this.pieces[idx].element.addEventListener('dragover', this.#allowDrop.bind(this.pieces[idx]))
-            this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this.pieces[idx]))
+            this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this, idx))
 
             ++file
             --blanks
@@ -145,9 +145,9 @@ class Board {
         }
 
         this.pieces[idx].element.setAttribute('draggable', 'true')
-        this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this.pieces[idx]))
+        this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this, idx))
         this.pieces[idx].element.addEventListener('dragover', this.#allowDrop.bind(this.pieces[idx]))
-        this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this.pieces[idx]))
+        this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this, idx))
 
         ++stridx;
       }
@@ -215,8 +215,8 @@ class Board {
     return rank * 8 + file
   }
 
-  #drag (event) {
-    event.dataTransfer.setData('text/plain', JSON.stringify(this))
+  #drag (idxSrc, event) {
+    event.dataTransfer.setData('text/plain', idxSrc)
     event.dataTransfer.effectAllowed = 'move'
   }
 
@@ -224,30 +224,32 @@ class Board {
     event.preventDefault();
   }
 
-  #drop (event) {
+  #drop (idxDst, event) {
     event.preventDefault();
 
     // Target cell gets data from piece of source cell
-    let piece = event.dataTransfer.getData('text/plain');
-    piece = JSON.parse(piece)
-    piece.element = document.getElementById(piece.cellId)
+    let idxSrc = event.dataTransfer.getData('text/plain');
+    let pieceSrc = this.pieces[idxSrc]
+    let pieceDst = this.pieces[idxDst]
 
     // Check that user is not dropping in the same cell
-    if (piece.file === this.file && piece.rank === this.rank)
+    if (pieceSrc.file === pieceDst.file && pieceSrc.rank === pieceDst.rank || pieceSrc.type === PIECES.EMPTY)
       return
 
     // TODO: CHECK IF MOVEMENT IS VALID
 
     // Removes piece from old cell
-    piece.element.classList.remove(piece.cssClass)
+    pieceSrc.element.classList.remove(pieceSrc.cssClass)
 
     // Renders piece in new cell
-    this.element.classList.remove(this.cssClass)
-    this.cssClass = piece.cssClass
-    this.element.classList.add(this.cssClass)
+    pieceDst.element.classList.remove(pieceDst.cssClass)
+    pieceDst.cssClass = pieceSrc.cssClass
+    pieceDst.element.classList.add(pieceDst.cssClass)
 
     // Sets reminding properties
-    this.type = piece.type
-    piece.type = PIECES.EMPTY
+    pieceDst.type = pieceSrc.type
+    pieceSrc.type = PIECES.EMPTY
+    pieceSrc.element.setAttribute('draggable', 'false')
+    pieceDst.element.setAttribute('draggable', 'true')
   }
 }
