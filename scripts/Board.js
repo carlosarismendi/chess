@@ -77,6 +77,10 @@ class Board {
           while(blanks > 0) {
             const idx = this.#fileAndRankToIdx(file, rank)
             this.pieces[idx] = new Piece({ type: PIECES.EMPTY, file: file, rank: rank, color: null })
+            this.pieces[idx].element.setAttribute('draggable', 'true')
+            this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this.pieces[idx]))
+            this.pieces[idx].element.addEventListener('dragover', this.#allowDrop.bind(this.pieces[idx]))
+            this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this.pieces[idx]))
 
             ++file
             --blanks
@@ -139,6 +143,11 @@ class Board {
             console.log(`default switch fen string: ${fen_string[stridx]}`)
             // --file
         }
+
+        this.pieces[idx].element.setAttribute('draggable', 'true')
+        this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this.pieces[idx]))
+        this.pieces[idx].element.addEventListener('dragover', this.#allowDrop.bind(this.pieces[idx]))
+        this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this.pieces[idx]))
 
         ++stridx;
       }
@@ -204,5 +213,41 @@ class Board {
 
   #fileAndRankToIdx (file, rank) {
     return rank * 8 + file
+  }
+
+  #drag (event) {
+    event.dataTransfer.setData('text/plain', JSON.stringify(this))
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  #allowDrop (event) {
+    event.preventDefault();
+  }
+
+  #drop (event) {
+    event.preventDefault();
+
+    // Target cell gets data from piece of source cell
+    let piece = event.dataTransfer.getData('text/plain');
+    piece = JSON.parse(piece)
+    piece.element = document.getElementById(piece.cellId)
+
+    // Check that user is not dropping in the same cell
+    if (piece.file === this.file && piece.rank === this.rank)
+      return
+
+    // TODO: CHECK IF MOVEMENT IS VALID
+
+    // Removes piece from old cell
+    piece.element.classList.remove(piece.cssClass)
+
+    // Renders piece in new cell
+    this.element.classList.remove(this.cssClass)
+    this.cssClass = piece.cssClass
+    this.element.classList.add(this.cssClass)
+
+    // Sets reminding properties
+    this.type = piece.type
+    piece.type = PIECES.EMPTY
   }
 }
