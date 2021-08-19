@@ -7,12 +7,19 @@
   <title>Chess</title>
 
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/board.css">
 </head>
 <body>
-  <!-- <div id="chessboard" class="chessboard"></div> -->
+
+  <!-- Chess board -->
   <div id="board" class="board"></div>
 
-  <!-- <script type="module" src="scripts/index.js"></script> -->
+  <!-- Chess board buttons -->
+  <div class="container">
+    <button type="button" class="btn btn-primary" onclick="init()">New game</button>
+  </div>
+
+  <!-- Scripts -->
   <script src="scripts/Piece.js"></script>
   <script src="scripts/Board.js"></script>
   <script src="scripts/index.js"></script>
