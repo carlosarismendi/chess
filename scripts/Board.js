@@ -49,7 +49,7 @@ class Board {
       for(let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
         const cell_id = `cell-${String.fromCharCode(65 + file)}${rank+1}`
         const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
-        const cell = `<div id="${cell_id}" class="${cell_class}"></div>\n`
+        const cell = `<div id="${cell_id}" class="${cell_class}">${this.#fileAndRankToIdx(file, rank)}</div>\n`
 
         this.element.innerHTML += cell
       }
@@ -65,7 +65,13 @@ class Board {
   }
 
   #parseFENNotation (fen_string) {
-    this.pieces = new Array(64)
+    this.pieces = new Array(120)
+    let rank = 0;
+    let file = 0;
+    for(let i = 0; i < this.pieces.length; ++i)
+    {
+      this.pieces[i] = new Piece({ type: PIECES.OUT_OF_BOARD, file: file, rank: rank, color: null })
+    }
 
     let stridx = 0
     for(let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
@@ -212,7 +218,7 @@ class Board {
   }
 
   #fileAndRankToIdx (file, rank) {
-    return rank * 8 + file
+    return (rank * 10 + file) + 21
   }
 
   #drag (idxSrc, event) {
@@ -276,6 +282,7 @@ class Board {
         this.#calcPawnMoves(pieceIdx, PIECE_OFFSETS.WHITE_PAWN)
         break
       case PIECES.WHITE_BISHOP:
+        this.#calcBishopMoves(pieceIdx, PIECE_OFFSETS.BISHOP)
         break
       case PIECES.WHITE_KNIGHT:
         break
@@ -303,7 +310,7 @@ class Board {
 
   #calcPawnMoves (pieceIdx, offsets) {
     /**
-     * CASOS:
+     * CASES:
      * - Movement out of board (INVALID)
      * - Forward movement blocked by a piece (INVALID)
      * - Forward movement to empty cell (ALLOWED)
@@ -312,14 +319,14 @@ class Board {
      * - Pawn reaches edge rank of board (for white pawn -> RANK_8 | for black pawn -> RANK_1) (PROMOTION)
      */
     let pieceSrc = this.pieces[pieceIdx]
+
     offsets.forEach(off => {
-      console.log(`off: ${off}`)
       let move = off + pieceIdx
       let pieceDst = this.pieces[move]
       if (!this.#isInBoard(move)) return // out of board
 
       // forward move
-      if (off % 8 === 0) {
+      if (off % 10 === 0) {
         if (pieceDst.type !== PIECES.EMPTY) return // forward blocked
         pieceSrc.legalMoves.push(move)
 
@@ -337,6 +344,27 @@ class Board {
     })
   }
 
+  #calcBishopMoves(pieceIdx, offsets) {
+    let pieceSrc = this.pieces[pieceIdx]
+
+    offsets.forEach(off => {
+      let move = off + pieceIdx
+      while (this.#isInBoard(move)) {
+        let pieceDst = this.pieces[move]
+        if (pieceDst.type === PIECES.EMPTY) {
+          pieceSrc.legalMoves.push(move)
+        } else {
+          if (pieceDst.color !== pieceSrc.color) {
+            pieceSrc.legalMoves.push(move)
+          }
+          break
+        }
+
+        move += off
+      }
+    })
+  }
+
   #showLegalMoves (pieceIdx) {
     this.pieces[pieceIdx].legalMoves.forEach(idx => {
       this.pieces[idx].element.classList.add('legal-move')
@@ -350,7 +378,7 @@ class Board {
   }
 
   #isInBoard (idx) {
-    return (idx >= 0 && idx < this.pieces.length)
+    return (this.pieces[idx].type !== PIECES.OUT_OF_BOARD)
   }
 
   #whitePawnPromotion (piece) {

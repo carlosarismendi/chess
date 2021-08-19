@@ -1,4 +1,5 @@
 const PIECES = {
+  OUT_OF_BOARD: -1,
   EMPTY: 0,
   WHITE_PAWN: 1,
   WHITE_BISHOP: 2,
@@ -16,13 +17,13 @@ const PIECES = {
 
 // LOOKING BOARD WITH WHITE BELOW
 const PIECE_OFFSETS = {
-  WHITE_PAWN: [7, 8, 9], // up-left, up, up-right
-  BLACK_PAWN: [-7, -8, -9], // down-right, down, down-left
-  BISHOP: [7, -7, 9, -9], // up-left, down-right, up-right, down-left
-  KNIGHT: [7, 16, 18, 11, -6, -10, -15, -17],
-  ROOK: [-1, 8, 1, -8], // left, up, right, down
-  KING: [-1, 7, 8, 9, 1, -7, -8, -9], // left, up-left, up, up-right, right, down-right, down, down-ñeft
-  QUEEN: [-1, 7, 8, 9, 1, -7, -8, -9] // left, up-left, up, up-right, right, down-right, down, down-ñeft
+  WHITE_PAWN: [9, 10, 11], // up-left, up, up-right
+  BLACK_PAWN: [-9, -10, -11], // down-right, down, down-left
+  BISHOP: [9, -9, 11, -11], // up-left, down-right, up-right, down-left
+  KNIGHT: [8, 19, 21, 12, -8, -19, -21, -12],
+  ROOK: [-1, 10, 1, -10], // left, up, right, down
+  KING: [-1, 9, 10, 11, 1, -9, -10, -11], // left, up-left, up, up-right, right, down-right, down, down-ñeft
+  QUEEN: [-1, 9, 10, 11, 1, -9, -10, -11] // left, up-left, up, up-right, right, down-right, down, down-ñeft
 }
 
 
