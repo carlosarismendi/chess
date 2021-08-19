@@ -83,10 +83,7 @@ class Board {
           while(blanks > 0) {
             const idx = this.#fileAndRankToIdx(file, rank)
             this.pieces[idx] = new Piece({ type: PIECES.EMPTY, file: file, rank: rank, color: null })
-            this.pieces[idx].element.setAttribute('draggable', 'false')
-            this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this, idx))
-            this.pieces[idx].element.addEventListener('dragover', this.#allowDrop.bind(this.pieces[idx]))
-            this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this, idx))
+            this.#addEventListenersToPiece(idx)
 
             ++file
             --blanks
@@ -149,12 +146,7 @@ class Board {
             console.log(`default switch fen string: ${fen_string[stridx]}`)
             // --file
         }
-
-        this.pieces[idx].element.setAttribute('draggable', 'true')
-        this.pieces[idx].element.addEventListener('dragstart', this.#drag.bind(this, idx))
-        this.pieces[idx].element.addEventListener('dragover', this.#allowDrop.bind(this.pieces[idx]))
-        this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this, idx))
-
+        this.#addEventListenersToPiece(idx)
         ++stridx;
       }
 
@@ -217,18 +209,34 @@ class Board {
     }
   }
 
+  #addEventListenersToPiece (idx) {
+    this.pieces[idx].element.setAttribute('draggable', 'true')
+    this.pieces[idx].element.addEventListener('mousedown', this.#mousedown.bind(this, idx))
+    this.pieces[idx].element.addEventListener('mouseup', this.#mouseup.bind(this, idx))
+    this.pieces[idx].element.addEventListener('dragstart', this.#dragstart.bind(this, idx))
+    this.pieces[idx].element.addEventListener('dragover', this.#dragover.bind(this.pieces[idx]))
+    this.pieces[idx].element.addEventListener('drop', this.#drop.bind(this, idx))
+  }
+
   #fileAndRankToIdx (file, rank) {
     return (rank * 10 + file) + 21
   }
 
-  #drag (idxSrc, event) {
+  #mousedown (idxSrc, event) {
     this.#calcLegalMoves(idxSrc)
     this.#showLegalMoves(idxSrc)
+  }
+
+  #mouseup (idxSrc, event) {
+    this.#hideLegalMoves(idxSrc)
+  }
+
+  #dragstart (idxSrc, event) {
     event.dataTransfer.setData('text/plain', idxSrc)
     event.dataTransfer.effectAllowed = 'move'
   }
 
-  #allowDrop (event) {
+  #dragover (event) {
     event.preventDefault();
   }
 
@@ -387,13 +395,13 @@ class Board {
     })
   }
 
-  #showLegalMoves (pieceIdx) {
+  async #showLegalMoves (pieceIdx) {
     this.pieces[pieceIdx].legalMoves.forEach(idx => {
       this.pieces[idx].element.classList.add('legal-move')
     });
   }
 
-  #hideLegalMoves (pieceIdx) {
+  async #hideLegalMoves (pieceIdx) {
     this.pieces[pieceIdx].legalMoves.forEach(idx => {
       this.pieces[idx].element.classList.remove('legal-move')
     });
