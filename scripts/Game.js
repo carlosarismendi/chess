@@ -150,6 +150,7 @@ class Game {
         break
 
       case PIECES.WHITE_KING:
+        this.#calcKingMoves(pieceIdx, PIECE_OFFSETS.KING)
         break
 
       case PIECES.BLACK_KING:
@@ -212,6 +213,22 @@ class Game {
         }
 
         move += off
+      }
+    })
+  }
+
+  #calcKingMoves (pieceIdx, offsets) {
+    let pieces = this.board.pieces
+    let pieceSrc = pieces[pieceIdx]
+
+    offsets.forEach(off => {
+      let move = off + pieceIdx
+      if (!this.#isInBoard(move)) return
+      // if('move' in check) return
+
+      let pieceDst = pieces[move]
+      if (pieceDst.type === PIECES.EMPTY || pieceDst.color !== pieceSrc.color) {
+        pieceSrc.legalMoves.push(move)
       }
     })
   }
