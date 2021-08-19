@@ -10,13 +10,23 @@
   <link rel="stylesheet" href="assets/board.css">
 </head>
 <body>
-  <!-- Chess board -->
-  <div id="board" class="board"></div>
-
-  <!-- Chess board buttons -->
   <div class="container">
-    <button type="button" class="btn btn-primary" onclick="init()">New game</button>
+    <!-- Black timer   -->
+    <div id="black-timer" class="timer timer-stop">11:11</div>
+
+    <!-- Chess board -->
+    <div id="board" class="board"></div>
+
+    <!-- White timer   -->
+    <div id="white-timer" class="timer">10:00</div>
+
+    <!-- Chess board buttons -->
+    <div>
+      <button type="button" class="btn btn-primary" onclick="init()">New game</button>
+    </div>
   </div>
+
+
 
   <!-- Scripts -->
   <script src="scripts/constants.js"></script>
