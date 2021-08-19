@@ -1,3 +1,5 @@
+const INITIAL_POSITION_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+
 const FILES = {
   FILE_A: 0,
   FILE_B: 1,

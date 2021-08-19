@@ -1,10 +1,7 @@
 class Board {
-  constructor({ selector, fen_string }) {
+  constructor({ selector }) {
     this.element = document.querySelector(selector)
     this.#drawBoard()
-    // fen_string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-    // fen_string = 'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2'
-    // fen_string = '4k3/8/8/8/8/8/4P3/4K3 w - - 5 39'
     this.pieces = []
   }
 

@@ -1,7 +1,11 @@
-let board = null
+let game = null
 
 window.onload = init
 
 function init () {
-  board = new Game({ selector: '#board', fen_string: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' })
+  game = new Game({ selector: '#board', fen_string: INITIAL_POSITION_FEN })
+}
+
+function newGame () {
+  game.restart()
 }

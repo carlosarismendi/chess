@@ -1,5 +1,6 @@
 class Game {
   constructor ({ selector, fen_string }) {
+    this.boardSelector = selector
     this.board = new Board({ selector: selector })
 
     let gameInfo = this.board.initFromFENNotation(fen_string)
@@ -8,6 +9,26 @@ class Game {
     this.blackCastle = gameInfo.blackCastle
 
     this.#addEventListenersToPieces()
+
+    this.whiteTimer = new Timer({ selector: 'white-timer', minutes: 10 })
+    this.whiteTimer.start()
+    this.blackTimer = new Timer({ selector: 'black-timer', minutes: 10 })
+  }
+
+  restart () {
+    this.board = new Board({ selector: this.boardSelector })
+
+    let gameInfo = this.board.initFromFENNotation(INITIAL_POSITION_FEN)
+    this.colorToPlay = gameInfo.colorToPlay
+    this.whiteCastle = gameInfo.whiteCastle
+    this.blackCastle = gameInfo.blackCastle
+
+    this.#addEventListenersToPieces()
+
+    this.whiteTimer.reset()
+    this.blackTimer.reset()
+
+    this.whiteTimer.start()
   }
 
   #addEventListenersToPieces () {
@@ -65,9 +86,6 @@ class Game {
     if (!pieceSrc.legalMoves.includes(idxDst))
       return
 
-    // Change turn from white to black and viceversa
-    this.colorToPlay = this.colorToPlay ^ 1
-
     pieceSrc.firstMove = false
     pieceDst.firstMove = false
 
@@ -91,6 +109,8 @@ class Game {
       this.#whitePawnPromotion(pieceDst)
     else if (pieceDst.rank === RANKS.RANK_1 && pieceDst.type === PIECES.BLACK_PAWN)
       this.#blackPawnPromotion(pieceDst)
+
+    this.#updateTurn()
   }
 
   #calcLegalMoves (pieceIdx) {
@@ -235,5 +255,23 @@ class Game {
 
   #blackPawnPromotion (piece) {
     piece.setType(PIECES.BLACK_QUEEN)
+  }
+
+  #updateTurn () {
+    if (this.colorToPlay === COLORS.WHITE) {
+      this.whiteTimer.pause()
+      this.blackTimer.start()
+
+      this.whiteTimer.element.classList.add('timer-stop')
+      this.blackTimer.element.classList.remove('timer-stop')
+      this.colorToPlay = COLORS.BLACK
+    } else {
+      this.whiteTimer.start()
+      this.blackTimer.pause()
+
+      this.whiteTimer.element.classList.remove('timer-stop')
+      this.blackTimer.element.classList.add('timer-stop')
+      this.colorToPlay = COLORS.WHITE
+    }
   }
 }
