@@ -288,28 +288,31 @@ class Board {
 
       case PIECES.WHITE_BISHOP:
       case PIECES.BLACK_BISHOP:
-        this.#calcBishopMoves(pieceIdx, PIECE_OFFSETS.BISHOP)
+        this.#calcLongRangePieceMoves(pieceIdx, PIECE_OFFSETS.BISHOP)
         break
 
       case PIECES.WHITE_KNIGHT:
       case PIECES.BLACK_KNIGHT:
         this.#calcKnightMoves(pieceIdx, PIECE_OFFSETS.KNIGHT)
         break
+
       case PIECES.WHITE_ROOK:
-        break
-      case PIECES.WHITE_KING:
-        break
-      case PIECES.WHITE_QUEEN:
+      case PIECES.BLACK_ROOK:
+        this.#calcLongRangePieceMoves(pieceIdx, PIECE_OFFSETS.ROOK)
         break
 
-      case PIECES.BLACK_KNIGHT:
+      case PIECES.WHITE_QUEEN:
+      case PIECES.BLACK_QUEEN:
+        this.#calcLongRangePieceMoves(pieceIdx, PIECE_OFFSETS.QUEEN)
         break
-      case PIECES.BLACK_ROOK:
+
+      case PIECES.WHITE_KING:
         break
+
       case PIECES.BLACK_KING:
         break
-      case PIECES.BLACK_QUEEN:
-        break
+
+
     }
   }
 
@@ -349,7 +352,7 @@ class Board {
     })
   }
 
-  #calcBishopMoves (pieceIdx, offsets) {
+  #calcLongRangePieceMoves (pieceIdx, offsets) {
     let pieceSrc = this.pieces[pieceIdx]
 
     offsets.forEach(off => {
