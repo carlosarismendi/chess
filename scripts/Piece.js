@@ -1,32 +1,3 @@
-const PIECES = {
-  OUT_OF_BOARD: -1,
-  EMPTY: 0,
-  WHITE_PAWN: 1,
-  WHITE_BISHOP: 2,
-  WHITE_KNIGHT: 3,
-  WHITE_ROOK: 4,
-  WHITE_KING: 5,
-  WHITE_QUEEN: 6,
-  BLACK_PAWN: 7,
-  BLACK_BISHOP: 8,
-  BLACK_KNIGHT: 9,
-  BLACK_ROOK: 10,
-  BLACK_KING: 11,
-  BLACK_QUEEN: 12
-}
-
-// LOOKING BOARD WITH WHITE BELOW
-const PIECE_OFFSETS = {
-  WHITE_PAWN: [9, 10, 11], // up-left, up, up-right
-  BLACK_PAWN: [-9, -10, -11], // down-right, down, down-left
-  BISHOP: [9, -9, 11, -11], // up-left, down-right, up-right, down-left
-  KNIGHT: [8, 19, 21, 12, -8, -19, -21, -12],
-  ROOK: [-1, 10, 1, -10], // left, up, right, down
-  KING: [-1, 9, 10, 11, 1, -9, -10, -11], // left, up-left, up, up-right, right, down-right, down, down-ñeft
-  QUEEN: [-1, 9, 10, 11, 1, -9, -10, -11] // left, up-left, up, up-right, right, down-right, down, down-ñeft
-}
-
-
 class Piece {
   constructor ({ type, file, rank, color }) {
     this.cellId = `cell-${String.fromCharCode(65 + file)}${rank+1}`
