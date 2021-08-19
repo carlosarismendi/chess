@@ -35,7 +35,7 @@ const CASTLES = {
 class Board {
   constructor({ selector, dimension }) {
     this.element = document.querySelector(selector)
-    this.whitePlay = true
+    this.colorToPlayValue = COLORS.WHITE
     this.whiteCastle = CASTLES.CASTLE_BOTH_SIDE
     this.blackCastle = CASTLES.CASTLE_BOTH_SIDE
     this.#drawBoard()
@@ -153,8 +153,8 @@ class Board {
       ++stridx; // ignore '/' char
     }
 
-    ++stridx
-    this.whitePlay = (fen_string[stridx] == 'w')
+    // ++stridx
+    this.colorToPlay = (fen_string[stridx] == 'w') ? COLORS.WHITE : COLORS.BLACK
 
     // white castle
     if (fen_string == '-') {
@@ -253,9 +253,16 @@ class Board {
     if (pieceSrc.file === pieceDst.file && pieceSrc.rank === pieceDst.rank || pieceSrc.type === PIECES.EMPTY)
       return
 
-    // TODO: CHECK IF MOVEMENT IS VALID
+    this.#move(pieceSrc, pieceDst, idxDst)
+  }
+
+  #move (pieceSrc, pieceDst, idxDst) {
+    // Check if movement is valid
     if (!pieceSrc.legalMoves.includes(idxDst))
       return
+
+    // Change turn from white to black and viceversa
+    this.colorToPlay = this.colorToPlay ^ 1
 
     pieceSrc.firstMove = false
     pieceDst.firstMove = false
@@ -284,6 +291,9 @@ class Board {
 
   #calcLegalMoves (pieceIdx) {
     this.pieces[pieceIdx].legalMoves = []
+
+    if (this.colorToPlay !== this.pieces[pieceIdx].color)
+      return
 
     switch (this.pieces[pieceIdx].type) {
       case PIECES.WHITE_PAWN:
