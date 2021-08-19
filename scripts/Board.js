@@ -281,10 +281,19 @@ class Board {
       case PIECES.WHITE_PAWN:
         this.#calcPawnMoves(pieceIdx, PIECE_OFFSETS.WHITE_PAWN)
         break
+
+      case PIECES.BLACK_PAWN:
+        this.#calcPawnMoves(pieceIdx, PIECE_OFFSETS.BLACK_PAWN)
+        break
+
       case PIECES.WHITE_BISHOP:
+      case PIECES.BLACK_BISHOP:
         this.#calcBishopMoves(pieceIdx, PIECE_OFFSETS.BISHOP)
         break
+
       case PIECES.WHITE_KNIGHT:
+      case PIECES.BLACK_KNIGHT:
+        this.#calcKnightMoves(pieceIdx, PIECE_OFFSETS.KNIGHT)
         break
       case PIECES.WHITE_ROOK:
         break
@@ -292,11 +301,7 @@ class Board {
         break
       case PIECES.WHITE_QUEEN:
         break
-      case PIECES.BLACK_PAWN:
-        this.#calcPawnMoves(pieceIdx, PIECE_OFFSETS.BLACK_PAWN)
-        break
-      case PIECES.BLACK_BISHOP:
-        break
+
       case PIECES.BLACK_KNIGHT:
         break
       case PIECES.BLACK_ROOK:
@@ -344,7 +349,7 @@ class Board {
     })
   }
 
-  #calcBishopMoves(pieceIdx, offsets) {
+  #calcBishopMoves (pieceIdx, offsets) {
     let pieceSrc = this.pieces[pieceIdx]
 
     offsets.forEach(off => {
@@ -361,6 +366,20 @@ class Board {
         }
 
         move += off
+      }
+    })
+  }
+
+  #calcKnightMoves (pieceIdx, offsets) {
+    let pieceSrc = this.pieces[pieceIdx]
+
+    offsets.forEach(off => {
+      let move = off + pieceIdx
+      if (!this.#isInBoard(move)) return
+
+      let pieceDst = this.pieces[move]
+      if (pieceDst.type === PIECES.EMPTY || pieceDst.color !== pieceSrc.color) {
+        pieceSrc.legalMoves.push(move)
       }
     })
   }
