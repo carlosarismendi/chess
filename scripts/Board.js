@@ -2,12 +2,28 @@ class Board {
   constructor({ selector }) {
     this.element = document.querySelector(selector)
     this.#drawBoard()
+    this.whitePieces = []
+    this.blackPieces = []
     this.pieces = []
   }
 
   getPiece (file, rank) {
-    let idx = this.#fileAndRankToIdx(file, rank)
-    return { idx: idx, piece: this.pieces[idx] }
+    let idx = this.fileAndRankToIdx(file, rank)
+    let pieceType = this.pieces[idx]
+    let pieceColor = pieceType & COLORS.WHITE
+
+    let piece = null
+    let piecesArray = (pieceColor === COLORS.WHITE) ? this.whitePieces : this.blackPieces
+
+    for(let i = 0; i < piecesArray.length; ++i) {
+
+      if (piecesArray[i].file === file && piecesArray[i].rank === rank) {
+        piece = piecesArray[i]
+        break
+      }
+    }
+
+    return { idx: idx, piece: piece }
   }
 
   #drawBoard() {
@@ -17,7 +33,7 @@ class Board {
       for(let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
         const cell_id = `cell-${String.fromCharCode(65 + file)}${rank+1}`
         const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
-        const cell = `<div id="${cell_id}" class="${cell_class}">${this.#fileAndRankToIdx(file, rank)}</div>\n`
+        const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
 
         this.element.innerHTML += cell
       }
@@ -37,20 +53,18 @@ class Board {
     let rank = 0;
     let file = 0;
     for(let i = 0; i < this.pieces.length; ++i)
-    {
-      this.pieces[i] = new Piece({ type: PIECES.OUT_OF_BOARD, file: file, rank: rank, color: null })
-    }
+      this.pieces[i] = PIECES.OUT_OF_BOARD
 
     let stridx = 0
     for(let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
       for(let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
-        const idx = this.#fileAndRankToIdx(file, rank)
+        const idx = this.fileAndRankToIdx(file, rank)
 
         let blanks = parseInt(fen_string[stridx])
         if(!Number.isNaN(blanks)) {
           while(blanks > 0) {
-            const idx = this.#fileAndRankToIdx(file, rank)
-            this.pieces[idx] = new Piece({ type: PIECES.EMPTY, file: file, rank: rank, color: null })
+            const idx = this.fileAndRankToIdx(file, rank)
+            this.pieces[idx] = PIECES.EMPTY // new Piece({ type: PIECES.EMPTY, file: file, rank: rank, color: null })
             // this.#addEventListenersToPiece(idx)
 
             ++file
@@ -63,51 +77,63 @@ class Board {
 
         switch (fen_string[stridx]) {
           case 'p':
-            this.pieces[idx] = new Piece({ type: PIECES.BLACK_PAWN, file: file, rank: rank, color: COLORS.BLACK })
+            this.pieces[idx] = PIECES.PAWN | COLORS.BLACK
+            this.blackPieces.push(new Piece({ type: PIECES.PAWN, file: file, rank: rank, color: COLORS.BLACK }))
             break
 
           case 'P':
-            this.pieces[idx] = new Piece({ type: PIECES.WHITE_PAWN, file: file, rank: rank, color: COLORS.WHITE })
+            this.pieces[idx] = PIECES.PAWN | COLORS.WHITE
+            this.whitePieces.push(new Piece({ type: PIECES.PAWN, file: file, rank: rank, color: COLORS.WHITE }))
             break
 
           case 'r':
-            this.pieces[idx] = new Piece({ type: PIECES.BLACK_ROOK, file: file, rank: rank, color: COLORS.BLACK })
+            this.pieces[idx] = PIECES.ROOK | COLORS.BLACK
+            this.blackPieces.push(new Piece({ type: PIECES.ROOK, file: file, rank: rank, color: COLORS.BLACK }))
             break
 
           case 'R':
-            this.pieces[idx] = new Piece({ type: PIECES.WHITE_ROOK, file: file, rank: rank, color: COLORS.WHITE })
+            this.pieces[idx] = PIECES.ROOK | COLORS.WHITE
+            this.whitePieces.push(new Piece({ type: PIECES.ROOK, file: file, rank: rank, color: COLORS.WHITE }))
             break
 
           case 'n':
-            this.pieces[idx] = new Piece({ type: PIECES.BLACK_KNIGHT, file: file, rank: rank, color: COLORS.BLACK })
+            this.pieces[idx] = PIECES.KNIGHT | COLORS.BLACK
+            this.blackPieces.push(new Piece({ type: PIECES.KNIGHT, file: file, rank: rank, color: COLORS.BLACK }))
             break
 
           case 'N':
-            this.pieces[idx] = new Piece({ type: PIECES.WHITE_KNIGHT, file: file, rank: rank, color: COLORS.WHITE })
+            this.pieces[idx] = PIECES.KNIGHT | COLORS.WHITE
+            this.whitePieces.push(new Piece({ type: PIECES.KNIGHT, file: file, rank: rank, color: COLORS.WHITE }))
             break
 
           case 'b':
-            this.pieces[idx] = new Piece({ type: PIECES.BLACK_BISHOP, file: file, rank: rank, color: COLORS.BLACK })
+            this.pieces[idx] = PIECES.BISHOP | COLORS.BLACK
+            this.blackPieces.push(new Piece({ type: PIECES.BISHOP, file: file, rank: rank, color: COLORS.BLACK }))
             break
 
           case 'B':
-            this.pieces[idx] = new Piece({ type: PIECES.WHITE_BISHOP, file: file, rank: rank, color: COLORS.WHITE })
+            this.pieces[idx] = PIECES.BISHOP | COLORS.WHITE
+            this.whitePieces.push(new Piece({ type: PIECES.BISHOP, file: file, rank: rank, color: COLORS.WHITE }))
             break
 
           case 'q':
-            this.pieces[idx] = new Piece({ type: PIECES.BLACK_QUEEN, file: file, rank: rank, color: COLORS.BLACK })
+            this.pieces[idx] = PIECES.QUEEN | COLORS.BLACK
+            this.blackPieces.push(new Piece({ type: PIECES.QUEEN, file: file, rank: rank, color: COLORS.BLACK }))
             break
 
           case 'Q':
-            this.pieces[idx] = new Piece({ type: PIECES.WHITE_QUEEN, file: file, rank: rank, color: COLORS.WHITE })
+            this.pieces[idx] = PIECES.QUEEN | COLORS.WHITE
+            this.whitePieces.push(new Piece({ type: PIECES.QUEEN, file: file, rank: rank, color: COLORS.WHITE }))
             break
 
           case 'k':
-            this.pieces[idx] = new Piece({ type: PIECES.BLACK_KING, file: file, rank: rank, color: COLORS.BLACK })
+            this.pieces[idx] = PIECES.KING | COLORS.BLACK
+            this.blackPieces.push(new Piece({ type: PIECES.KING, file: file, rank: rank, color: COLORS.BLACK }))
             break
 
           case 'K':
-            this.pieces[idx] = new Piece({ type: PIECES.WHITE_KING, file: file, rank: rank, color: COLORS.WHITE })
+            this.pieces[idx] = PIECES.KING | COLORS.WHITE
+            this.whitePieces.push(new Piece({ type: PIECES.KING, file: file, rank: rank, color: COLORS.WHITE }))
             break
 
           default:
@@ -179,7 +205,27 @@ class Board {
     return gameInfo
   }
 
-  #fileAndRankToIdx (file, rank) {
+  fileAndRankToIdx (file, rank) {
     return (rank * 10 + file) + 21
+  }
+
+  idxToFileAndRank (idx) {
+    let file = (idx - 21) % 10
+    let rank = (idx - 21 - file) / 10
+    return { file: file, rank: rank }
+  }
+
+  getElementByIdx(idx) {
+    let { file, rank } = this.idxToFileAndRank(idx)
+    let element = this.getElementByFileAndRank(file, rank)
+
+    return element
+  }
+
+  getElementByFileAndRank(file, rank) {
+    let elementId = `cell-${String.fromCharCode(65 + file)}${rank+1}`
+    let element = document.getElementById(elementId)
+
+    return element
   }
 }

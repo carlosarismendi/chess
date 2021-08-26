@@ -24,7 +24,7 @@ const RANKS = {
 
 const COLORS = {
   BLACK: 0,
-  WHITE: 1
+  WHITE: 8
 }
 
 const CASTLES = {
@@ -35,20 +35,14 @@ const CASTLES = {
 }
 
 const PIECES = {
-  OUT_OF_BOARD: -1,
-  EMPTY: 0,
-  WHITE_PAWN: 1,
-  WHITE_BISHOP: 2,
-  WHITE_KNIGHT: 3,
-  WHITE_ROOK: 4,
-  WHITE_KING: 5,
-  WHITE_QUEEN: 6,
-  BLACK_PAWN: 7,
-  BLACK_BISHOP: 8,
-  BLACK_KNIGHT: 9,
-  BLACK_ROOK: 10,
-  BLACK_KING: 11,
-  BLACK_QUEEN: 12
+  OUT_OF_BOARD: 0,
+  EMPTY: 1,
+  PAWN: 2,
+  BISHOP: 3,
+  KNIGHT: 4,
+  ROOK: 5,
+  KING: 6,
+  QUEEN: 7
 }
 
 // LOOKING BOARD WITH WHITE BELOW

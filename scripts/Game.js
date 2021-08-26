@@ -32,31 +32,37 @@ class Game {
   }
 
   #addEventListenersToPieces () {
-    for(let rank = RANKS.RANK_1; rank <= RANKS.RANK_8; ++rank) {
-      for(let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
-        let { idx, piece } = this.board.getPiece(file, rank)
+    for(let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
+      for(let rank = RANKS.RANK_1; rank <= RANKS.RANK_8; ++rank) {
+        let idx = this.board.fileAndRankToIdx(file, rank)
+        let element = this.board.getElementByIdx(idx)
 
-        piece.element.setAttribute('draggable', 'true')
-        piece.element.addEventListener('mousedown', this.#mousedown.bind(this, idx))
-        piece.element.addEventListener('mouseup', this.#mouseup.bind(this, idx))
-        piece.element.addEventListener('dragstart', this.#dragstart.bind(this, idx))
-        piece.element.addEventListener('dragover', this.#dragover.bind(piece))
-        piece.element.addEventListener('drop', this.#drop.bind(this, idx))
+        element.setAttribute('draggable', 'true')
+        element.addEventListener('mousedown', this.#mousedown.bind(this, file, rank))
+        element.addEventListener('mouseup', this.#mouseup.bind(this, file, rank))
+        element.addEventListener('dragstart', this.#dragstart.bind(this, file, rank))
+        element.addEventListener('dragover', this.#dragover)
+        element.addEventListener('drop', this.#drop.bind(this, file, rank))
       }
     }
   }
 
-  #mousedown (idxSrc, event) {
-    this.#calcLegalMoves(idxSrc)
-    this.#showLegalMoves(idxSrc)
+  #mousedown (fileSrc, rankSrc, event) {
+
+    let { idx, piece } = this.board.getPiece(fileSrc, rankSrc)
+
+    this.#calcLegalMoves(piece)
+    this.#showLegalMoves(piece)
   }
 
-  #mouseup (idxSrc, event) {
-    this.#hideLegalMoves(idxSrc)
+  #mouseup (fileSrc, rankSrc, event) {
+    let { idx, piece } = this.board.getPiece(fileSrc, rankSrc)
+
+    this.#hideLegalMoves(piece)
   }
 
-  #dragstart (idxSrc, event) {
-    event.dataTransfer.setData('text/plain', idxSrc)
+  #dragstart (fileSrc, rankSrc, event) {
+    event.dataTransfer.setData('text/plain', JSON.stringify({ fileSrc: fileSrc, rankSrc: rankSrc }))
     event.dataTransfer.effectAllowed = 'move'
   }
 
@@ -64,101 +70,88 @@ class Game {
     event.preventDefault();
   }
 
-  #drop (idxDst, event) {
+  #drop (fileDst, rankDst, event) {
     event.preventDefault();
     let pieces = this.board.pieces
 
     // Target cell gets data from piece of source cell
-    let idxSrc = parseInt( event.dataTransfer.getData('text/plain') )
-    this.#hideLegalMoves(idxSrc)
-    let pieceSrc = pieces[idxSrc]
-    let pieceDst = pieces[idxDst]
+    let { fileSrc, rankSrc } = JSON.parse(event.dataTransfer.getData('text/plain'))
+    let { idx: idxSrc, piece: pieceSrc }  = this.board.getPiece(fileSrc, rankSrc)
+    let { idx: idxDst, piece: pieceDst } = this.board.getPiece(fileDst, rankDst)
 
-    // Check that user is not dropping in the same cell
-    if (pieceSrc.file === pieceDst.file && pieceSrc.rank === pieceDst.rank || pieceSrc.type === PIECES.EMPTY)
+    this.#hideLegalMoves(pieceSrc)
+
+    // Check that user is not dropping in the same cell or trying to drag an empty cell
+    if (!pieceSrc || pieceDst && (pieceSrc.file === pieceDst.file && pieceSrc.rank === pieceDst.rank || pieceSrc.type === PIECES.EMPTY))
       return
 
-    this.#move(pieceSrc, pieceDst, idxDst)
+    this.#move(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst)
   }
 
-  #move (pieceSrc, pieceDst, idxDst) {
+  #move (idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
+
     // Check if movement is valid
     if (!pieceSrc.legalMoves.includes(idxDst))
       return
 
+    if (pieceDst) {
+      pieceDst.element.classList.remove(pieceDst.cssClass)
+    }
+
     pieceSrc.firstMove = false
-    pieceDst.firstMove = false
 
-    // Removes piece from old cell
-    pieceSrc.element.classList.remove(pieceSrc.cssClass)
-
-    // Renders piece in new cell
-    pieceDst.element.classList.remove(pieceDst.cssClass)
-    pieceDst.cssClass = pieceSrc.cssClass
-    pieceDst.element.classList.add(pieceDst.cssClass)
-
-    // Sets reminding properties
-    pieceDst.type = pieceSrc.type
-    pieceSrc.type = PIECES.EMPTY
-    pieceDst.color = pieceSrc.color
-    pieceSrc.element.setAttribute('draggable', 'false')
-    pieceDst.element.setAttribute('draggable', 'true')
+    pieceSrc.setCell(fileDst, rankDst)
+    this.board.pieces[idxSrc] = PIECES.EMPTY
+    this.board.pieces[idxDst] = pieceSrc.type | pieceSrc.color
 
     // Check if piece is a pawn that has reached promotion ranks
-    if (pieceDst.rank === RANKS.RANK_8 && pieceDst.type === PIECES.WHITE_PAWN)
-      this.#whitePawnPromotion(pieceDst)
-    else if (pieceDst.rank === RANKS.RANK_1 && pieceDst.type === PIECES.BLACK_PAWN)
-      this.#blackPawnPromotion(pieceDst)
+    if (pieceSrc.rank === RANKS.RANK_8 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.WHITE)
+      this.#whitePawnPromotion(pieceSrc)
+    else if (pieceSrc.rank === RANKS.RANK_1 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.BLACK)
+      this.#blackPawnPromotion(pieceSrc)
 
     this.#updateTurn()
   }
 
-  #calcLegalMoves (pieceIdx) {
-    let pieces = this.board.pieces
-    pieces[pieceIdx].legalMoves = []
+  #calcLegalMoves (pieceSrc) {
+    if (!pieceSrc) return
 
-    if (this.colorToPlay !== pieces[pieceIdx].color)
+    pieceSrc.legalMoves = []
+
+    if (this.colorToPlay !== pieceSrc.color)
       return
 
-    switch (pieces[pieceIdx].type) {
-      case PIECES.WHITE_PAWN:
-        this.#calcPawnMoves(pieceIdx, PIECE_OFFSETS.WHITE_PAWN)
+    switch (pieceSrc.type) {
+      case PIECES.PAWN:
+        if (pieceSrc.color === COLORS.WHITE)
+          this.#calcPawnMoves(pieceSrc, PIECE_OFFSETS.WHITE_PAWN)
+        else
+          this.#calcPawnMoves(pieceSrc, PIECE_OFFSETS.BLACK_PAWN)
         break
 
-      case PIECES.BLACK_PAWN:
-        this.#calcPawnMoves(pieceIdx, PIECE_OFFSETS.BLACK_PAWN)
+      case PIECES.BISHOP:
+        this.#calcLongRangePieceMoves(pieceSrc, PIECE_OFFSETS.BISHOP)
         break
 
-      case PIECES.WHITE_BISHOP:
-      case PIECES.BLACK_BISHOP:
-        this.#calcLongRangePieceMoves(pieceIdx, PIECE_OFFSETS.BISHOP)
+      case PIECES.KNIGHT:
+        this.#calcKnightMoves(pieceSrc, PIECE_OFFSETS.KNIGHT)
         break
 
-      case PIECES.WHITE_KNIGHT:
-      case PIECES.BLACK_KNIGHT:
-        this.#calcKnightMoves(pieceIdx, PIECE_OFFSETS.KNIGHT)
+      case PIECES.ROOK:
+        this.#calcLongRangePieceMoves(pieceSrc, PIECE_OFFSETS.ROOK)
         break
 
-      case PIECES.WHITE_ROOK:
-      case PIECES.BLACK_ROOK:
-        this.#calcLongRangePieceMoves(pieceIdx, PIECE_OFFSETS.ROOK)
+      case PIECES.QUEEN:
+        this.#calcLongRangePieceMoves(pieceSrc, PIECE_OFFSETS.QUEEN)
         break
 
-      case PIECES.WHITE_QUEEN:
-      case PIECES.BLACK_QUEEN:
-        this.#calcLongRangePieceMoves(pieceIdx, PIECE_OFFSETS.QUEEN)
-        break
-
-      case PIECES.WHITE_KING:
-        this.#calcKingMoves(pieceIdx, PIECE_OFFSETS.KING)
-        break
-
-      case PIECES.BLACK_KING:
+      case PIECES.KING:
+        this.#calcKingMoves(pieceSrc, PIECE_OFFSETS.KING)
         break
     }
   }
 
-  #calcPawnMoves (pieceIdx, offsets) {
+  #calcPawnMoves (pieceSrc, offsets) {
     /**
      * CASES:
      * - Movement out of board (INVALID)
@@ -169,7 +162,7 @@ class Game {
      * - Pawn reaches edge rank of board (for white pawn -> RANK_8 | for black pawn -> RANK_1) (PROMOTION)
      */
     let pieces = this.board.pieces
-    let pieceSrc = pieces[pieceIdx]
+    let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
     offsets.forEach(off => {
       let move = off + pieceIdx
@@ -178,35 +171,37 @@ class Game {
 
       // forward move
       if (off % 10 === 0) {
-        if (pieceDst.type !== PIECES.EMPTY) return // forward blocked
+        if (pieceDst !== PIECES.EMPTY) return // forward blocked
         pieceSrc.legalMoves.push(move)
 
         move += off
         pieceDst = pieces[move] // 2 steps forward
 
-        if (pieceSrc.firstMove && pieceDst.type === PIECES.EMPTY && this.#isInBoard(move)) {
+        if (pieceSrc.firstMove && pieceDst === PIECES.EMPTY && this.#isInBoard(move)) {
           pieceSrc.legalMoves.push(move)
         }
       } else {
         // Pawn kills enemy piece
-        if (pieceDst.type === PIECES.EMPTY || pieceDst.color === pieceSrc.color) return
+        let pieceDstColor = pieceDst & COLORS.WHITE
+        if (pieceDst === PIECES.EMPTY || pieceDstColor === pieceSrc.color) return
         pieceSrc.legalMoves.push(move)
       }
     })
   }
 
-  #calcLongRangePieceMoves (pieceIdx, offsets) {
+  #calcLongRangePieceMoves (pieceSrc, offsets) {
     let pieces = this.board.pieces
-    let pieceSrc = pieces[pieceIdx]
+    let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
     offsets.forEach(off => {
       let move = off + pieceIdx
       while (this.#isInBoard(move)) {
         let pieceDst = pieces[move]
-        if (pieceDst.type === PIECES.EMPTY) {
+        if (pieceDst === PIECES.EMPTY) {
           pieceSrc.legalMoves.push(move)
         } else {
-          if (pieceDst.color !== pieceSrc.color) {
+          let pieceDstColor = pieceDst & COLORS.WHITE
+          if (pieceDstColor !== pieceSrc.color) {
             pieceSrc.legalMoves.push(move)
           }
           break
@@ -217,9 +212,9 @@ class Game {
     })
   }
 
-  #calcKingMoves (pieceIdx, offsets) {
+  #calcKingMoves (pieceSrc, offsets) {
     let pieces = this.board.pieces
-    let pieceSrc = pieces[pieceIdx]
+    let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
     offsets.forEach(off => {
       let move = off + pieceIdx
@@ -227,51 +222,57 @@ class Game {
       // if('move' in check) return
 
       let pieceDst = pieces[move]
-      if (pieceDst.type === PIECES.EMPTY || pieceDst.color !== pieceSrc.color) {
+      let pieceDstColor = pieceDst & COLORS.WHITE
+      if (pieceDst === PIECES.EMPTY || pieceDstColor !== pieceSrc.color) {
         pieceSrc.legalMoves.push(move)
       }
     })
   }
 
-  #calcKnightMoves (pieceIdx, offsets) {
+  #calcKnightMoves (pieceSrc, offsets) {
     let pieces = this.board.pieces
-    let pieceSrc = pieces[pieceIdx]
+    let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
     offsets.forEach(off => {
       let move = off + pieceIdx
       if (!this.#isInBoard(move)) return
 
       let pieceDst = pieces[move]
-      if (pieceDst.type === PIECES.EMPTY || pieceDst.color !== pieceSrc.color) {
+      let pieceDstColor = pieceDst & COLORS.WHITE
+      if (pieceDst === PIECES.EMPTY || pieceDstColor !== pieceSrc.color) {
         pieceSrc.legalMoves.push(move)
       }
     })
   }
 
-  async #showLegalMoves (pieceIdx) {
-    let pieces = this.board.pieces
-    pieces[pieceIdx].legalMoves.forEach(idx => {
-      pieces[idx].element.classList.add('legal-move')
+  async #showLegalMoves (piece) {
+    if (!piece) return
+
+    piece.legalMoves.forEach(idx => {
+      let element = this.board.getElementByIdx(idx)
+      element.classList.add('legal-move')
     });
   }
 
-  async #hideLegalMoves (pieceIdx) {
-    let pieces = this.board.pieces
-    pieces[pieceIdx].legalMoves.forEach(idx => {
-      pieces[idx].element.classList.remove('legal-move')
+  async #hideLegalMoves (piece) {
+    if (!piece) return
+
+    piece.legalMoves.forEach(idx => {
+      let element = this.board.getElementByIdx(idx)
+      element.classList.remove('legal-move')
     });
   }
 
   #isInBoard (idx) {
-    return (this.board.pieces[idx].type !== PIECES.OUT_OF_BOARD)
+    return (this.board.pieces[idx] !== PIECES.OUT_OF_BOARD)
   }
 
   #whitePawnPromotion (piece) {
-    piece.setType(PIECES.WHITE_QUEEN)
+    piece.setType(PIECES.QUEEN)
   }
 
   #blackPawnPromotion (piece) {
-    piece.setType(PIECES.BLACK_QUEEN)
+    piece.setType(PIECES.QUEEN)
   }
 
   #updateTurn () {
