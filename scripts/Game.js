@@ -94,13 +94,9 @@ class Game {
     if (!pieceSrc.legalMoves.includes(idxDst))
       return
 
-    if (pieceDst) {
-      pieceDst.element.classList.remove(pieceDst.cssClass)
-      this.board.removePiece(pieceDst)
-    }
+    this.board.removePiece(pieceDst)
 
     pieceSrc.firstMove = false
-
     pieceSrc.setCell(fileDst, rankDst)
     this.board.pieces[idxSrc] = PIECES.EMPTY
     this.board.pieces[idxDst] = pieceSrc.type | pieceSrc.color

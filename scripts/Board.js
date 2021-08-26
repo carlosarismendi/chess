@@ -230,6 +230,9 @@ class Board {
   }
 
   removePiece (piece) {
+    if (!piece) return
+
+    piece.element.classList.remove(piece.cssClass)
     let piecesArray = (piece.color === COLORS.WHITE) ? this.whitePieces : this.blackPieces
 
     for(let i = 0; i < piecesArray.length; ++i) {
