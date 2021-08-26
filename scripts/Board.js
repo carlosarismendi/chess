@@ -215,17 +215,27 @@ class Board {
     return { file: file, rank: rank }
   }
 
-  getElementByIdx(idx) {
+  getElementByIdx (idx) {
     let { file, rank } = this.idxToFileAndRank(idx)
     let element = this.getElementByFileAndRank(file, rank)
 
     return element
   }
 
-  getElementByFileAndRank(file, rank) {
+  getElementByFileAndRank (file, rank) {
     let elementId = `cell-${String.fromCharCode(65 + file)}${rank+1}`
     let element = document.getElementById(elementId)
 
     return element
+  }
+
+  removePiece (piece) {
+    let piecesArray = (piece.color === COLORS.WHITE) ? this.whitePieces : this.blackPieces
+
+    for(let i = 0; i < piecesArray.length; ++i) {
+      if (piecesArray[i].file === piece.file && piecesArray[i].rank === piece.rank) {
+        piecesArray.splice(i, i)
+      }
+    }
   }
 }

@@ -96,6 +96,7 @@ class Game {
 
     if (pieceDst) {
       pieceDst.element.classList.remove(pieceDst.cssClass)
+      this.board.removePiece(pieceDst)
     }
 
     pieceSrc.firstMove = false
