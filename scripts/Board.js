@@ -7,6 +7,9 @@ class Board {
     this.pieces = []
   }
 
+  /*
+    Returns {idx, price} of a coordinate
+  */
   getPiece (file, rank) {
     let idx = this.fileAndRankToIdx(file, rank)
     let pieceType = this.pieces[idx]
@@ -24,6 +27,33 @@ class Board {
     }
 
     return { idx: idx, piece: piece }
+  }
+
+  whiteKing() {
+    for(let i = 0; i < this.whitePieces.length; ++i) {
+
+      if (this.whitePieces[i].type === PIECES.KING) {
+        return this.whitePieces[i]
+      }
+    }
+    console.error("King doesnt exists???????????")
+  }
+
+  blackKing() {
+    for(let i = 0; i < this.blackPieces.length; ++i) {
+
+      if (this.blackPieces[i].type === PIECES.KING) {
+        return this.blackPieces[i]
+      }
+    }
+    console.error("King doesnt exists???????????")
+  }
+
+  getKing(colour) {
+    if (colour === COLORS.WHITE) {
+      return this.whiteKing()
+    }
+    return this.blackKing()
   }
 
   #drawBoard() {

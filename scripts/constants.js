@@ -53,5 +53,5 @@ const PIECE_OFFSETS = {
   KNIGHT: [8, 19, 21, 12, -8, -19, -21, -12],
   ROOK: [-1, 10, 1, -10], // left, up, right, down
   KING: [-1, 9, 10, 11, 1, -9, -10, -11], // left, up-left, up, up-right, right, down-right, down, down-ñeft
-  QUEEN: [-1, 9, 10, 11, 1, -9, -10, -11] // left, up-left, up, up-right, right, down-right, down, down-ñeft
+  QUEEN: [-1, 9, 10, 11, 1, -9, -10, -11], // left, up-left, up, up-right, right, down-right, down, down-ñeft
 }

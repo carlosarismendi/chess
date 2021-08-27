@@ -1,5 +1,5 @@
 class Game {
-  constructor ({ selector, fen_string }) {
+  constructor({ selector, fen_string }) {
     this.boardSelector = selector
     this.board = new Board({ selector: selector })
 
@@ -15,7 +15,7 @@ class Game {
     this.blackTimer = new Timer({ selector: 'black-timer', minutes: 10 })
   }
 
-  restart () {
+  restart() {
     this.board = new Board({ selector: this.boardSelector })
 
     let gameInfo = this.board.initFromFENNotation(INITIAL_POSITION_FEN)
@@ -31,9 +31,9 @@ class Game {
     this.whiteTimer.start()
   }
 
-  #addEventListenersToPieces () {
-    for(let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
-      for(let rank = RANKS.RANK_1; rank <= RANKS.RANK_8; ++rank) {
+  #addEventListenersToPieces() {
+    for (let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
+      for (let rank = RANKS.RANK_1; rank <= RANKS.RANK_8; ++rank) {
         let idx = this.board.fileAndRankToIdx(file, rank)
         let element = this.board.getElementByIdx(idx)
 
@@ -47,7 +47,7 @@ class Game {
     }
   }
 
-  #mousedown (fileSrc, rankSrc, event) {
+  #mousedown(fileSrc, rankSrc, event) {
 
     let { idx, piece } = this.board.getPiece(fileSrc, rankSrc)
 
@@ -55,28 +55,28 @@ class Game {
     this.#showLegalMoves(piece)
   }
 
-  #mouseup (fileSrc, rankSrc, event) {
+  #mouseup(fileSrc, rankSrc, event) {
     let { idx, piece } = this.board.getPiece(fileSrc, rankSrc)
 
     this.#hideLegalMoves(piece)
   }
 
-  #dragstart (fileSrc, rankSrc, event) {
+  #dragstart(fileSrc, rankSrc, event) {
     event.dataTransfer.setData('text/plain', JSON.stringify({ fileSrc: fileSrc, rankSrc: rankSrc }))
     event.dataTransfer.effectAllowed = 'move'
   }
 
-  #dragover (event) {
+  #dragover(event) {
     event.preventDefault();
   }
 
-  #drop (fileDst, rankDst, event) {
+  #drop(fileDst, rankDst, event) {
     event.preventDefault();
     let pieces = this.board.pieces
 
     // Target cell gets data from piece of source cell
     let { fileSrc, rankSrc } = JSON.parse(event.dataTransfer.getData('text/plain'))
-    let { idx: idxSrc, piece: pieceSrc }  = this.board.getPiece(fileSrc, rankSrc)
+    let { idx: idxSrc, piece: pieceSrc } = this.board.getPiece(fileSrc, rankSrc)
     let { idx: idxDst, piece: pieceDst } = this.board.getPiece(fileDst, rankDst)
 
     this.#hideLegalMoves(pieceSrc)
@@ -88,7 +88,7 @@ class Game {
     this.#move(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst)
   }
 
-  #move (idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
+  #move(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
 
     // Check if movement is valid
     if (!pieceSrc.legalMoves.includes(idxDst))
@@ -108,9 +108,15 @@ class Game {
       this.#blackPawnPromotion(pieceSrc)
 
     this.#updateTurn()
+    let enemyColor = (pieceSrc.color === COLORS.WHITE) ? COLORS.BLACK : COLORS.WHITE
+    console.log("enemy color" , enemyColor)
+    let king = this.board.getKing(enemyColor)
+    if (this.#isCheck(king)) {
+      console.log(king)
+    }
   }
 
-  #calcLegalMoves (pieceSrc) {
+  #calcLegalMoves(pieceSrc) {
     if (!pieceSrc) return
 
     pieceSrc.legalMoves = []
@@ -148,7 +154,7 @@ class Game {
     }
   }
 
-  #calcPawnMoves (pieceSrc, offsets) {
+  #calcPawnMoves(pieceSrc, offsets) {
     /**
      * CASES:
      * - Movement out of board (INVALID)
@@ -186,7 +192,7 @@ class Game {
     })
   }
 
-  #calcLongRangePieceMoves (pieceSrc, offsets) {
+  #calcLongRangePieceMoves(pieceSrc, offsets) {
     let pieces = this.board.pieces
     let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
@@ -209,7 +215,52 @@ class Game {
     })
   }
 
-  #calcKingMoves (pieceSrc, offsets) {
+  /*
+    Returns if a specific type of piece is making check to the king
+  */
+  #checksWith(king, typeSearch, offsets) {
+    let pieces = this.board.pieces
+    let pieceIdx = this.board.fileAndRankToIdx(king.file, king.rank)
+    let checks = [] // idx of pieces making check
+
+    offsets.forEach(off => {
+      let moveIdx = off + pieceIdx
+      while (this.#isInBoard(moveIdx)) {
+        let pieceDst = pieces[moveIdx]
+        if (pieceDst !== PIECES.EMPTY) { // there is a piece
+          let pieceDstColor = pieceDst & COLORS.WHITE
+          let pieceType = pieceDst ^ pieceDstColor
+          if (pieceDstColor !== king.color && pieceType === typeSearch) { // enemy colour
+            checks.push(moveIdx)
+          }
+          break // next offset
+        }
+        moveIdx += off
+      }
+    })
+    return checks
+  }
+
+  #isCheck(king) {
+    let checks = []
+    if (king.color === COLORS.WHITE) {
+      checks.concat(this.#checksWith(king, PIECES.BLACK_PAWN, PIECE_OFFSETS.BLACK_PAWN))
+    } else {
+      checks.concat(this.#checksWith(king, PIECES.WHITE_PAWN, PIECE_OFFSETS.WHITE_PAWN))
+    }
+    checks = checks.concat(this.#checksWith(king, PIECES.BISHOP, PIECE_OFFSETS.BISHOP))
+    checks = checks.concat(this.#checksWith(king, PIECES.KNIGHT, PIECE_OFFSETS.KNIGHT))
+    checks = checks.concat(this.#checksWith(king, PIECES.ROOK, PIECE_OFFSETS.ROOK))
+    checks = checks.concat(this.#checksWith(king, PIECES.KING, PIECE_OFFSETS.KING)) //not necessary but porsiaca
+    checks = checks.concat(this.#checksWith(king, PIECES.QUEEN, PIECE_OFFSETS.QUEEN)) //not necessary but porsiaca
+
+    if (checks.length != 0) {
+      console.log(checks)
+    }
+  }
+
+
+  #calcKingMoves(pieceSrc, offsets) {
     let pieces = this.board.pieces
     let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
@@ -226,7 +277,7 @@ class Game {
     })
   }
 
-  #calcKnightMoves (pieceSrc, offsets) {
+  #calcKnightMoves(pieceSrc, offsets) {
     let pieces = this.board.pieces
     let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
@@ -242,7 +293,7 @@ class Game {
     })
   }
 
-  async #showLegalMoves (piece) {
+  async #showLegalMoves(piece) {
     if (!piece) return
 
     piece.legalMoves.forEach(idx => {
@@ -251,7 +302,7 @@ class Game {
     });
   }
 
-  async #hideLegalMoves (piece) {
+  async #hideLegalMoves(piece) {
     if (!piece) return
 
     piece.legalMoves.forEach(idx => {
@@ -260,19 +311,19 @@ class Game {
     });
   }
 
-  #isInBoard (idx) {
+  #isInBoard(idx) {
     return (this.board.pieces[idx] !== PIECES.OUT_OF_BOARD)
   }
 
-  #whitePawnPromotion (piece) {
+  #whitePawnPromotion(piece) {
     piece.setType(PIECES.QUEEN)
   }
 
-  #blackPawnPromotion (piece) {
+  #blackPawnPromotion(piece) {
     piece.setType(PIECES.QUEEN)
   }
 
-  #updateTurn () {
+  #updateTurn() {
     if (this.colorToPlay === COLORS.WHITE) {
       this.whiteTimer.pause()
       this.blackTimer.start()
