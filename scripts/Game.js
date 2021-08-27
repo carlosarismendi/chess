@@ -108,12 +108,56 @@ class Game {
       this.#blackPawnPromotion(pieceSrc)
 
     this.#updateTurn()
+
     let enemyColor = (pieceSrc.color === COLORS.WHITE) ? COLORS.BLACK : COLORS.WHITE
-    console.log("enemy color" , enemyColor)
+    console.log("enemy color", enemyColor)
     let king = this.board.getKing(enemyColor)
-    if (this.#isCheck(king)) {
-      console.log(king)
+    let bullies = this.#bullyPiecesIdx(king)
+
+    if (bullies.length != 0) {
+      console.log("Bully at " + bullies)
+      let cellsToProtect = []
+
+      for (let bullyIdx of bullies) {
+
+        let kingIdx = this.board.fileAndRankToIdx(king.file, king.rank)
+        // let bullyPiece = this.board.getPieceByIdx(bullies[0])
+
+        if (bullies[0] == (PIECES.KNIGHT | enemyColor)) {
+          cellsToProtect.push( this.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KNIGHT))
+        } else {
+          cellsToProtect.push(this.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KING))
+        }
+        //TODO
+        /*
+        - guardar global de ifcheck
+        - guardar en global posiciones a defender en check
+        - cuando una pieza calcule sus movimientos disponibles, coger solo los comunes con los que hay que defender
+        - en caso de querer mover el rey, comprobar que el siguiente estado no sea check
+        */
+      }
+      console.log("Cells to block check " + cellsToProtect)
+
+      // for (let idx of cellsToProtect) {
+        // let piece = this.board.getPieceByIdx(kingIdx)
+        // piece.element.style.backgroundColor = 'red'
+      // }
     }
+
+  }
+
+  getMovesFromTo(idxSrc, idxDst, offsets) {
+    let moves = []
+    for (let off of offsets) {
+      let move = off + idxSrc
+      moves = []
+      while (this.#isInBoard(move)) {
+        moves.push(move)
+        if (move === idxDst) return moves
+        move += off
+      }
+    }
+    return moves
   }
 
   #calcLegalMoves(pieceSrc) {
@@ -241,22 +285,42 @@ class Game {
     return checks
   }
 
-  #isCheck(king) {
+  #checksWithOneMove(king, typeSearch, offsets) {
+    let pieces = this.board.pieces
+    let pieceIdx = this.board.fileAndRankToIdx(king.file, king.rank)
+    let checks = [] // idx of pieces making check
+
+    offsets.forEach(off => {
+      let moveIdx = off + pieceIdx
+      if (!this.#isInBoard(moveIdx)) return
+
+      let pieceDst = pieces[moveIdx]
+      if (pieceDst !== PIECES.EMPTY) { // there is a piece
+        let pieceDstColor = pieceDst & COLORS.WHITE
+        let pieceType = pieceDst ^ pieceDstColor
+        if (pieceDstColor !== king.color && pieceType === typeSearch) { // enemy colour
+          checks.push(moveIdx)
+        }
+      }
+      moveIdx += off
+    })
+    return checks
+  }
+
+  #bullyPiecesIdx(king) {
     let checks = []
     if (king.color === COLORS.WHITE) {
-      checks.concat(this.#checksWith(king, PIECES.BLACK_PAWN, PIECE_OFFSETS.BLACK_PAWN))
+      checks.concat(this.#checksWithOneMove(king, PIECES.BLACK_PAWN, PIECE_OFFSETS.BLACK_PAWN))
     } else {
-      checks.concat(this.#checksWith(king, PIECES.WHITE_PAWN, PIECE_OFFSETS.WHITE_PAWN))
+      checks.concat(this.#checksWithOneMove(king, PIECES.WHITE_PAWN, PIECE_OFFSETS.WHITE_PAWN))
     }
     checks = checks.concat(this.#checksWith(king, PIECES.BISHOP, PIECE_OFFSETS.BISHOP))
-    checks = checks.concat(this.#checksWith(king, PIECES.KNIGHT, PIECE_OFFSETS.KNIGHT))
+    checks = checks.concat(this.#checksWithOneMove(king, PIECES.KNIGHT, PIECE_OFFSETS.KNIGHT))
     checks = checks.concat(this.#checksWith(king, PIECES.ROOK, PIECE_OFFSETS.ROOK))
-    checks = checks.concat(this.#checksWith(king, PIECES.KING, PIECE_OFFSETS.KING)) //not necessary but porsiaca
-    checks = checks.concat(this.#checksWith(king, PIECES.QUEEN, PIECE_OFFSETS.QUEEN)) //not necessary but porsiaca
+    checks = checks.concat(this.#checksWithOneMove(king, PIECES.KING, PIECE_OFFSETS.KING))
+    checks = checks.concat(this.#checksWith(king, PIECES.QUEEN, PIECE_OFFSETS.QUEEN))
 
-    if (checks.length != 0) {
-      console.log(checks)
-    }
+    return checks
   }
 
 

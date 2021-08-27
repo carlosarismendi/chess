@@ -29,6 +29,24 @@ class Board {
     return { idx: idx, piece: piece }
   }
 
+  getPieceByIdx (idx) {
+    let pieceType = this.pieces[idx]
+    let pieceColor = pieceType & COLORS.WHITE
+    let {file, rank} = this.idxToFileAndRank(idx)
+    let piece = null
+    let piecesArray = (pieceColor === COLORS.WHITE) ? this.whitePieces : this.blackPieces
+
+    for(let i = 0; i < piecesArray.length; ++i) {
+
+      if (piecesArray[i].file === file && piecesArray[i].rank === rank) {
+        piece = piecesArray[i]
+        break
+      }
+    }
+
+    return piece
+  }
+
   whiteKing() {
     for(let i = 0; i < this.whitePieces.length; ++i) {
 
