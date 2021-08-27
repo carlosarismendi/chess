@@ -135,7 +135,6 @@ class Game {
         - cuando una pieza calcule sus movimientos disponibles, coger solo los comunes con los que hay que defender
         - en caso de querer mover el rey, comprobar que el siguiente estado no sea check
         */
-
       }
       console.log("Cells to block check " + cellsToProtect)
 
