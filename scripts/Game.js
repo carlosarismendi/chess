@@ -5,6 +5,8 @@ class Game {
 
     let gameInfo = this.board.initFromFENNotation(fen_string)
     this.colorToPlay = gameInfo.colorToPlay
+    this.isCheck = false
+    this.cellsToProtect = []
     this.whiteCastle = gameInfo.whiteCastle
     this.blackCastle = gameInfo.blackCastle
 
@@ -109,41 +111,72 @@ class Game {
 
     this.#updateTurn()
 
-    let enemyColor = (pieceSrc.color === COLORS.WHITE) ? COLORS.BLACK : COLORS.WHITE
-    console.log("enemy color", enemyColor)
-    let king = this.board.getKing(enemyColor)
+    console.log("Color to play", this.int2string(this.colorToPlay))
+    let king = this.board.getKing(this.colorToPlay)
     let bullies = this.#bullyPiecesIdx(king)
 
     if (bullies.length != 0) {
+      this.isCheck = true
       console.log("Bully at " + bullies)
-      let cellsToProtect = []
+      this.cellsToProtect = []
 
       for (let bullyIdx of bullies) {
 
         let kingIdx = this.board.fileAndRankToIdx(king.file, king.rank)
+        let bullyTypeColor = this.board.pieces[bullyIdx] // type | color
+        let bullyColor = bullyTypeColor & COLORS.WHITE
+        let bullyType = bullyTypeColor - bullyColor
         // let bullyPiece = this.board.getPieceByIdx(bullies[0])
 
-        if (bullies[0] == (PIECES.KNIGHT | enemyColor)) {
-          cellsToProtect.push( this.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KNIGHT))
+        console.log("Bully type " + bullyTypeColor + " " + this.int2string(bullyTypeColor))
+        if (bullyType === PIECES.KNIGHT) {
+          this.cellsToProtect = this.cellsToProtect.concat(bullyIdx)
         } else {
-          cellsToProtect.push(this.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KING))
+          this.cellsToProtect = this.cellsToProtect.concat(this.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KING))
         }
         //TODO
         /*
-        - guardar global de ifcheck
-        - guardar en global posiciones a defender en check
         - cuando una pieza calcule sus movimientos disponibles, coger solo los comunes con los que hay que defender
         - en caso de querer mover el rey, comprobar que el siguiente estado no sea check
         */
       }
-      console.log("Cells to block check " + cellsToProtect)
+      console.log("Cells to block check " + this.cellsToProtect)
 
-      // for (let idx of cellsToProtect) {
-        // let piece = this.board.getPieceByIdx(kingIdx)
-        // piece.element.style.backgroundColor = 'red'
+      // for (let idx of this.cellsToProtect) {
+      // let piece = this.board.getPieceByIdx(kingIdx)
+      // piece.element.style.backgroundColor = 'red'
       // }
+    } else {
+      this.isCheck = false
     }
 
+  }
+
+  int2string(typeAndColor) {
+    let color = typeAndColor & COLORS.WHITE
+    let type = typeAndColor - color
+
+    if (color === COLORS.WHITE) {
+      switch (type) {
+        case PIECES.PAWN: return 'white-pawn'
+        case PIECES.BISHOP: return 'white-bishop'
+        case PIECES.KNIGHT: return 'white-knight'
+        case PIECES.ROOK: return 'white-rook'
+        case PIECES.KING: return 'white-king'
+        case PIECES.QUEEN: return 'white-queen'
+        default: return 'white'
+      }
+    } else {
+      switch (type) {
+        case PIECES.PAWN: return 'black-pawn'
+        case PIECES.BISHOP: return 'black-bishop'
+        case PIECES.KNIGHT: return 'black-knight'
+        case PIECES.ROOK: return 'black-rook'
+        case PIECES.KING: return 'black-king'
+        case PIECES.QUEEN: return 'black-queen'
+        default: return 'black'
+      }
+    }
   }
 
   getMovesFromTo(idxSrc, idxDst, offsets) {
@@ -195,6 +228,17 @@ class Game {
       case PIECES.KING:
         this.#calcKingMoves(pieceSrc, PIECE_OFFSETS.KING)
         break
+    }
+
+    if (this.isCheck) {
+      console.log("legal moves = " + pieceSrc.legalMoves)
+      console.log("cells to protect = " + this.cellsToProtect)
+      let moves = pieceSrc.legalMoves
+      // console.log((typeof pieceSrc.legalMoves[0]))
+      // console.log((typeof this.cellsToProtect[0]))
+      pieceSrc.legalMoves = moves.filter(idx => this.cellsToProtect.includes(idx))
+
+      console.log("final legal moves = " + pieceSrc.legalMoves)
     }
   }
 
@@ -310,9 +354,9 @@ class Game {
   #bullyPiecesIdx(king) {
     let checks = []
     if (king.color === COLORS.WHITE) {
-      checks.concat(this.#checksWithOneMove(king, PIECES.BLACK_PAWN, PIECE_OFFSETS.BLACK_PAWN))
+      checks = checks.concat(this.#checksWithOneMove(king, PIECES.BLACK_PAWN, PIECE_OFFSETS.BLACK_PAWN))
     } else {
-      checks.concat(this.#checksWithOneMove(king, PIECES.WHITE_PAWN, PIECE_OFFSETS.WHITE_PAWN))
+      checks = checks.concat(this.#checksWithOneMove(king, PIECES.WHITE_PAWN, PIECE_OFFSETS.WHITE_PAWN))
     }
     checks = checks.concat(this.#checksWith(king, PIECES.BISHOP, PIECE_OFFSETS.BISHOP))
     checks = checks.concat(this.#checksWithOneMove(king, PIECES.KNIGHT, PIECE_OFFSETS.KNIGHT))
