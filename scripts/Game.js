@@ -111,18 +111,21 @@ class Game {
 
     this.#updateTurn()
 
-    console.log("Color to play", this.int2string(this.colorToPlay))
+    console.log("******************************************")
     let king = this.board.getKing(this.colorToPlay)
-    let bullies = this.#bullyPiecesIdx(king)
+    let kingIdx = this.board.fileAndRankToIdx(king.file, king.rank)
+    let enemyColor = this.colorToPlay ^ COLORS.WHITE
+    let bullies = this.#bullyPiecesIdx(kingIdx, enemyColor)
+    console.log("King at " + kingIdx + " | Color to play " + this.int2string(this.colorToPlay))
 
     if (bullies.length != 0) {
       this.isCheck = true
-      console.log("Bully at " + bullies)
       this.cellsToProtect = []
+
+      console.log("Bully at " + bullies)
 
       for (let bullyIdx of bullies) {
 
-        let kingIdx = this.board.fileAndRankToIdx(king.file, king.rank)
         let bullyTypeColor = this.board.pieces[bullyIdx] // type | color
         let bullyColor = bullyTypeColor & COLORS.WHITE
         let bullyType = bullyTypeColor - bullyColor
@@ -134,11 +137,6 @@ class Game {
         } else {
           this.cellsToProtect = this.cellsToProtect.concat(this.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KING))
         }
-        //TODO
-        /*
-        - cuando una pieza calcule sus movimientos disponibles, coger solo los comunes con los que hay que defender
-        - en caso de querer mover el rey, comprobar que el siguiente estado no sea check
-        */
       }
       console.log("Cells to block check " + this.cellsToProtect)
 
@@ -230,15 +228,35 @@ class Game {
         break
     }
 
-    if (this.isCheck) {
-      console.log("legal moves = " + pieceSrc.legalMoves)
-      console.log("cells to protect = " + this.cellsToProtect)
-      let moves = pieceSrc.legalMoves
-      // console.log((typeof pieceSrc.legalMoves[0]))
-      // console.log((typeof this.cellsToProtect[0]))
-      pieceSrc.legalMoves = moves.filter(idx => this.cellsToProtect.includes(idx))
+    let enemyColor = this.colorToPlay ^ COLORS.WHITE
+    // let kingIdx = this.fileAndRankToIdx(king.file, king.rank)
+    // let bullies = this.#bullyPiecesIdx(kingIdx, enemyColor)
 
-      console.log("final legal moves = " + pieceSrc.legalMoves)
+    if (this.isCheck) {
+      if (pieceSrc.type == PIECES.KING) {
+        // moves that king can kill a bully
+        // pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => bullies.includes(idx))
+        pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => this.#bullyPiecesIdx(idx, enemyColor).length == 0) //safe places
+      } else {
+        pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => this.cellsToProtect.includes(idx)) //cells to block check or kill bully
+      }
+      console.log("IsCheck -> moves = " + pieceSrc.legalMoves)
+    } else {
+      // ver si la pieza esta defendiendo al rey de otra pieza
+      // si es rey hacer otra cosa
+
+      // let idxSrc = this.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
+      // for (let off of offsets) { //offsets reina
+      //   let move = off + idxKing
+      //   while (this.#isInBoard(move)) {
+      //     if (move === idxSrc) {
+      //       //encontramos a la pieza que mueve -> seguir con ese offset hasta encontrar enemigo
+      //     }
+      //     move += off
+      //   }
+      // }
+
+      console.log("NoCheck -> moves = " + pieceSrc.legalMoves + " enemy color " + enemyColor)
     }
   }
 
@@ -304,21 +322,20 @@ class Game {
   }
 
   /*
-    Returns if a specific type of piece is making check to the king
+    Returns if a specific type of piece is making check to some cell
   */
-  #checksWith(king, typeSearch, offsets) {
+  #checksWith(idxCell, colorToAtack, typeSearch, offsets) {
     let pieces = this.board.pieces
-    let pieceIdx = this.board.fileAndRankToIdx(king.file, king.rank)
     let checks = [] // idx of pieces making check
 
     offsets.forEach(off => {
-      let moveIdx = off + pieceIdx
+      let moveIdx = off + idxCell
       while (this.#isInBoard(moveIdx)) {
         let pieceDst = pieces[moveIdx]
         if (pieceDst !== PIECES.EMPTY) { // there is a piece
           let pieceDstColor = pieceDst & COLORS.WHITE
           let pieceType = pieceDst ^ pieceDstColor
-          if (pieceDstColor !== king.color && pieceType === typeSearch) { // enemy colour
+          if (pieceDstColor === colorToAtack && pieceType === typeSearch) { // enemy colour
             checks.push(moveIdx)
           }
           break // next offset
@@ -329,20 +346,19 @@ class Game {
     return checks
   }
 
-  #checksWithOneMove(king, typeSearch, offsets) {
+  #checksWithOneMove(idxCell, colorToAtack, typeSearch, offsets) {
     let pieces = this.board.pieces
-    let pieceIdx = this.board.fileAndRankToIdx(king.file, king.rank)
     let checks = [] // idx of pieces making check
 
     offsets.forEach(off => {
-      let moveIdx = off + pieceIdx
+      let moveIdx = off + idxCell
       if (!this.#isInBoard(moveIdx)) return
 
       let pieceDst = pieces[moveIdx]
       if (pieceDst !== PIECES.EMPTY) { // there is a piece
         let pieceDstColor = pieceDst & COLORS.WHITE
         let pieceType = pieceDst ^ pieceDstColor
-        if (pieceDstColor !== king.color && pieceType === typeSearch) { // enemy colour
+        if (pieceDstColor === colorToAtack && pieceType === typeSearch) { // enemy colour
           checks.push(moveIdx)
         }
       }
@@ -351,18 +367,21 @@ class Game {
     return checks
   }
 
-  #bullyPiecesIdx(king) {
+  /*
+    Returns idx of enemy pieces (#colorToAtack) which atacks #idxCell
+  */
+  #bullyPiecesIdx(idxCell, colorToAtack) {
     let checks = []
-    if (king.color === COLORS.WHITE) {
-      checks = checks.concat(this.#checksWithOneMove(king, PIECES.BLACK_PAWN, PIECE_OFFSETS.BLACK_PAWN))
+    if (colorToAtack === COLORS.BLACK) {
+      checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.BLACK_PAWN, PIECE_OFFSETS.BLACK_PAWN))
     } else {
-      checks = checks.concat(this.#checksWithOneMove(king, PIECES.WHITE_PAWN, PIECE_OFFSETS.WHITE_PAWN))
+      checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.WHITE_PAWN, PIECE_OFFSETS.WHITE_PAWN))
     }
-    checks = checks.concat(this.#checksWith(king, PIECES.BISHOP, PIECE_OFFSETS.BISHOP))
-    checks = checks.concat(this.#checksWithOneMove(king, PIECES.KNIGHT, PIECE_OFFSETS.KNIGHT))
-    checks = checks.concat(this.#checksWith(king, PIECES.ROOK, PIECE_OFFSETS.ROOK))
-    checks = checks.concat(this.#checksWithOneMove(king, PIECES.KING, PIECE_OFFSETS.KING))
-    checks = checks.concat(this.#checksWith(king, PIECES.QUEEN, PIECE_OFFSETS.QUEEN))
+    checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.KNIGHT, PIECE_OFFSETS.KNIGHT))
+    checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.KING, PIECE_OFFSETS.KING))
+    checks = checks.concat(this.#checksWith(idxCell, colorToAtack, PIECES.BISHOP, PIECE_OFFSETS.BISHOP))
+    checks = checks.concat(this.#checksWith(idxCell, colorToAtack, PIECES.ROOK, PIECE_OFFSETS.ROOK))
+    checks = checks.concat(this.#checksWith(idxCell, colorToAtack, PIECES.QUEEN, PIECE_OFFSETS.QUEEN))
 
     return checks
   }
