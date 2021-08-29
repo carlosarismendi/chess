@@ -285,7 +285,8 @@ class Board {
 
     for (let i = 0; i < piecesArray.length; ++i) {
       if (piecesArray[i].file === piece.file && piecesArray[i].rank === piece.rank) {
-        piecesArray.splice(i, i)
+        piecesArray.splice(i, 1)
+        break
       }
     }
   }

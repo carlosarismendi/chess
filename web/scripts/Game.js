@@ -24,6 +24,8 @@ class Game {
     this.colorToPlay = gameInfo.colorToPlay
     this.whiteCastle = gameInfo.whiteCastle
     this.blackCastle = gameInfo.blackCastle
+    this.isCheck = false
+    this.cellsToProtect = []
 
     this.#addEventListenersToPieces()
 
@@ -104,16 +106,17 @@ class Game {
     this.board.pieces[idxDst] = pieceSrc.type | pieceSrc.color
 
     // Check if piece is a pawn that has reached promotion ranks
-    if (pieceSrc.rank === RANKS.RANK_8 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.WHITE)
-      this.#whitePawnPromotion(pieceSrc)
-    else if (pieceSrc.rank === RANKS.RANK_1 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.BLACK)
-      this.#blackPawnPromotion(pieceSrc)
+    if (pieceSrc.rank === RANKS.RANK_8 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.WHITE) {
+      this.#PawnPromotion(pieceSrc, idxDst)
+    }
+    else if (pieceSrc.rank === RANKS.RANK_1 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.BLACK) {
+      this.#PawnPromotion(pieceSrc, idxDst)
+    }
 
     this.#updateTurn()
 
     console.log("******************************************")
     this.searchForCheck()
-    // rey bloquea a si mismo
   }
 
   /*
@@ -155,6 +158,7 @@ class Game {
       // }
     } else {
       this.isCheck = false
+      this.cellsToProtect = []
     }
   }
 
@@ -249,7 +253,7 @@ class Game {
       let idxSrc = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
       let king = this.board.getKing(pieceSrc.color)
       let idxKing = this.board.fileAndRankToIdx(king.file, king.rank)
-      console.log("King at " + idxKing + " " + idxSrc)
+      console.log("King at " + idxKing + " | piece to move: " + idxSrc)
 
       if (this.board.sameDiagonal(idxSrc, idxKing) || this.board.sameRowOrCol(idxSrc, idxKing)) {
 
@@ -275,22 +279,23 @@ class Game {
           for (let move = idxSrc + off; this.board.isInBoard(move); move += off) {
 
             let cell = this.board.pieces[move]
-            if (cell !== PIECES.EMPTY) { // found piece
-              let pieceDstColor = cell & COLORS.WHITE
-              let pieceType = cell - pieceDstColor
-              if (pieceDstColor !== pieceSrc.color && pieceType !== PIECES.KNIGHT) { // enemy color and not knight
-                console.log("Encontre enemigo " + move)
-                let path = this.board.getMovesFromTo(idxKing, move, [off])
-                pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => path.includes(idx))
-                break;
-              }
+            let pieceDstColor = cell & COLORS.WHITE
+            let pieceType = cell - pieceDstColor
+
+            if (cell !== PIECES.EMPTY && pieceDstColor !== pieceSrc.color // found piece of enemy color
+              && pieceType !== PIECES.PAWN && pieceType !== PIECES.KNIGHT && pieceType !== PIECES.KING) { // not pawn or knight or king
+
+              console.log("Encontre enemigo " + move)
+              let path = this.board.getMovesFromTo(idxKing, move, [off])
+              pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => path.includes(idx))
+              break;
             }
           }
         }
       }
-
-      console.log("NoCheck -> moves = " + pieceSrc.legalMoves)
     }
+
+    console.log("NoCheck -> moves = " + pieceSrc.legalMoves)
   }
 
   getOffset(src, dst) {
@@ -417,10 +422,12 @@ class Game {
   */
   #bullyPiecesIdx(idxCell, colorToAtack) {
     let checks = []
-    if (colorToAtack === COLORS.BLACK) {
-      checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.BLACK_PAWN, PIECE_OFFSETS.BLACK_PAWN))
+    if (colorToAtack === COLORS.BLACK) { // inverse offsets because we try to move with idx
+      checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.PAWN, PIECE_OFFSETS.WHITE_PAWN_ATACK))
     } else {
-      checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.WHITE_PAWN, PIECE_OFFSETS.WHITE_PAWN))
+      checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.PAWN, PIECE_OFFSETS.BLACK_PAWN_ATACK))
+      console.log("from " + idxCell)
+      console.log("checks pawn: " + checks)
     }
     checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.KNIGHT, PIECE_OFFSETS.KNIGHT))
     checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.KING, PIECE_OFFSETS.KING))
@@ -483,12 +490,9 @@ class Game {
     });
   }
 
-  #whitePawnPromotion(piece) {
+  #PawnPromotion(piece, idx) {
     piece.setType(PIECES.QUEEN)
-  }
-
-  #blackPawnPromotion(piece) {
-    piece.setType(PIECES.QUEEN)
+    this.board.pieces[idx] = PIECES.QUEEN | piece.color
   }
 
   #updateTurn() {

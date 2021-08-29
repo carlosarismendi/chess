@@ -49,6 +49,8 @@ const PIECES = {
 const PIECE_OFFSETS = {
   WHITE_PAWN: [9, 10, 11], // up-left, up, up-right
   BLACK_PAWN: [-9, -10, -11], // down-right, down, down-left
+  WHITE_PAWN_ATACK: [9, 11], // up-left, up-right
+  BLACK_PAWN_ATACK: [-9, -11], // down-right, down-left
   BISHOP: [9, -9, 11, -11], // up-left, down-right, up-right, down-left
   KNIGHT: [8, 19, 21, 12, -8, -19, -21, -12],
   ROOK: [-1, 10, 1, -10], // left, up, right, down
