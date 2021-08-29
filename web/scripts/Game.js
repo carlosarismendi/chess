@@ -225,7 +225,6 @@ class Game {
             return bullies.every(bully => {
               let bullyOffsets = pieceOffsets(this.board.pieces[bully])
               if (bullyOffsets.includes(off)) {
-                console.log("Same off " + int2string(this.board.pieces[bully]))
                 // if using the same offset it can find us
                 return !this.board.getMovesFromTo(bully, nextMove, [off]).includes(pieceIdx)
               }
