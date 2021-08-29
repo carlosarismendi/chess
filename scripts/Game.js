@@ -112,6 +112,14 @@ class Game {
     this.#updateTurn()
 
     console.log("******************************************")
+    this.searchForCheck()
+    // rey bloquea a si mismo
+  }
+
+  /*
+    Sets variables isCheck and cellsToProtect
+  */
+  searchForCheck() {
     let king = this.board.getKing(this.colorToPlay)
     let kingIdx = this.board.fileAndRankToIdx(king.file, king.rank)
     let enemyColor = this.colorToPlay ^ COLORS.WHITE
@@ -121,23 +129,25 @@ class Game {
       this.isCheck = true
       this.cellsToProtect = []
 
-      console.log("King at " + kingIdx + " | Bully at " + bullies)
+      console.log("King at " + kingIdx + " | Bullies at " + bullies)
 
-      for (let bullyIdx of bullies) {
-
+      if (bullies.length > 1) { // cant be bloqued
+        this.cellsToProtect = []
+      }
+      else {
+        let bullyIdx = bullies[0]
         let bullyTypeColor = this.board.pieces[bullyIdx] // type | color
         let bullyColor = bullyTypeColor & COLORS.WHITE
         let bullyType = bullyTypeColor - bullyColor
-        // let bullyPiece = this.board.getPieceByIdx(bullies[0])
+        console.log("Bully type " + bullyTypeColor + " " + int2string(bullyTypeColor))
 
-        console.log("Bully type " + bullyTypeColor + " " + this.int2string(bullyTypeColor))
-        if (bullyType === PIECES.KNIGHT) {
+        if (bullyType === PIECES.KNIGHT) { // cant block knight, only kill him
           this.cellsToProtect = this.cellsToProtect.concat(bullyIdx)
         } else {
-          this.cellsToProtect = this.cellsToProtect.concat(this.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KING))
+          this.cellsToProtect = this.cellsToProtect.concat(this.board.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KING)) //path to block or kill
         }
+
       }
-      // console.log("Cells to block check " + this.cellsToProtect)
 
       // for (let idx of this.cellsToProtect) {
       // let piece = this.board.getPieceByIdx(kingIdx)
@@ -146,48 +156,6 @@ class Game {
     } else {
       this.isCheck = false
     }
-
-  }
-
-  int2string(typeAndColor) {
-    let color = typeAndColor & COLORS.WHITE
-    let type = typeAndColor - color
-
-    if (color === COLORS.WHITE) {
-      switch (type) {
-        case PIECES.PAWN: return 'white-pawn'
-        case PIECES.BISHOP: return 'white-bishop'
-        case PIECES.KNIGHT: return 'white-knight'
-        case PIECES.ROOK: return 'white-rook'
-        case PIECES.KING: return 'white-king'
-        case PIECES.QUEEN: return 'white-queen'
-        default: return 'white'
-      }
-    } else {
-      switch (type) {
-        case PIECES.PAWN: return 'black-pawn'
-        case PIECES.BISHOP: return 'black-bishop'
-        case PIECES.KNIGHT: return 'black-knight'
-        case PIECES.ROOK: return 'black-rook'
-        case PIECES.KING: return 'black-king'
-        case PIECES.QUEEN: return 'black-queen'
-        default: return 'black'
-      }
-    }
-  }
-
-  getMovesFromTo(idxSrc, idxDst, offsets) {
-    let moves = []
-    for (let off of offsets) {
-      let move = off + idxSrc
-      moves = []
-      while (this.#isInBoard(move)) {
-        moves.push(move)
-        if (move === idxDst) return moves
-        move += off
-      }
-    }
-    return moves
   }
 
   #calcLegalMoves(pieceSrc) {
@@ -227,14 +195,49 @@ class Game {
         break
     }
 
+    this.subtractIlegalMoves(pieceSrc)
+  }
+
+  /*
+    In case of check, it filters the legal moves with the idxCells which permit to block the check
+    Otherwise, it deletes moves that put the king in check:
+    - King tries to move a not safe place
+    - Ally piece unlock the path for a enemy piece
+  */
+  subtractIlegalMoves(pieceSrc) {
     let enemyColor = this.colorToPlay ^ COLORS.WHITE
 
     // let bullies = this.#bullyPiecesIdx(kingIdx, enemyColor)
 
     if (this.isCheck) {
       if (pieceSrc.type == PIECES.KING) {
-        pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => this.#bullyPiecesIdx(idx, enemyColor).length == 0) //safe places
-      } else {
+        let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
+
+        // safe places (not taking into account that king can block himself)
+        pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => this.#bullyPiecesIdx(idx, enemyColor).length == 0)
+        // erase moves where king is between the move and bully
+        pieceSrc.legalMoves = pieceSrc.legalMoves.filter(
+          nextMove => {
+            let off = this.getOffset(pieceIdx, nextMove) // direction where king is moving
+            let bullies = this.#bullyPiecesIdx(pieceIdx, enemyColor)
+
+            // if each bully doesnt have path to nextmove using our offset
+            return bullies.every(bully => {
+              let bullyOffsets = pieceOffsets(this.board.pieces[bully])
+              if (bullyOffsets.includes(off)) {
+                console.log("Same off " + int2string(this.board.pieces[bully]))
+                // if using the same offset it can find us
+                return !this.board.getMovesFromTo(bully, nextMove, [off]).includes(pieceIdx)
+              }
+              else {
+                return true // doesnt have the offset we use to move (scape)
+              }
+            })
+            // return true
+          }
+        )
+      }
+      else {
         pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => this.cellsToProtect.includes(idx)) //cells to block check or kill bully
       }
       console.log("IsCheck -> moves = " + pieceSrc.legalMoves)
@@ -249,19 +252,15 @@ class Game {
       let idxKing = this.board.fileAndRankToIdx(king.file, king.rank)
       console.log("King at " + idxKing + " " + idxSrc)
 
-      if (this.sameDiagonal(idxSrc, idxKing) || this.sameRowOrCol(idxSrc, idxKing)) {
+      if (this.board.sameDiagonal(idxSrc, idxKing) || this.board.sameRowOrCol(idxSrc, idxKing)) {
 
-        let offFile = this.abs(pieceSrc.file - king.file)
-        let offRank = this.abs(pieceSrc.rank - king.rank)
-        let off = idxSrc - idxKing  //offset from king to srcPiece
-        let dist = (offFile > offRank) ? offFile : offRank
-        off = off / dist
+        let off = this.getOffset(idxKing, idxSrc)
         console.log(off)
 
         // go from king to srcPiece, looking for a piece blocking the path
         let pathBlocked = false  // if a piece is blocking the path, srcPiece doesnt have to worry about king
         let move = off + idxKing
-        for (; this.#isInBoard(move); move += off) {
+        for (; this.board.isInBoard(move); move += off) {
           if (move === idxSrc) break
 
           let cell = this.board.pieces[move]
@@ -274,7 +273,7 @@ class Game {
 
         if (!pathBlocked) {
           // go from srcPiece using same offset, looking for an enemy
-          for (let move = idxSrc + off; this.#isInBoard(move); move += off) {
+          for (let move = idxSrc + off; this.board.isInBoard(move); move += off) {
 
             let cell = this.board.pieces[move]
             if (cell !== PIECES.EMPTY) { // found piece
@@ -282,7 +281,7 @@ class Game {
               let pieceType = cell - pieceDstColor
               if (pieceDstColor !== pieceSrc.color && pieceType !== PIECES.KNIGHT) { // enemy color and not knight
                 console.log("Encontre enemigo " + move)
-                let path = this.getMovesFromTo(idxKing, move, [off])
+                let path = this.board.getMovesFromTo(idxKing, move, [off])
                 pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => path.includes(idx))
                 break;
               }
@@ -295,20 +294,16 @@ class Game {
     }
   }
 
-  abs(a) {
-    return (a < 0) ? -a : a
-  }
+  getOffset(src, dst) {
+    let { file: srcFile, rank: srcRank } = this.board.idxToFileAndRank(src)
+    let { file: dstFile, rank: dstRank } = this.board.idxToFileAndRank(dst)
 
-  sameDiagonal(idx1, idx2) {
-    let { file: r1, rank: c1 } = this.board.idxToFileAndRank(idx1)
-    let { file: r2, rank: c2 } = this.board.idxToFileAndRank(idx2)
-    return (this.abs(r1 - r2) === this.abs(c1 - c2))
-  }
-
-  sameRowOrCol(idx1, idx2) {
-    let { file: r1, rank: c1 } = this.board.idxToFileAndRank(idx1)
-    let { file: r2, rank: c2 } = this.board.idxToFileAndRank(idx2)
-    return (r1 === r2 || c1 === c2)
+    let offFile = abs(srcFile - dstFile)
+    let offRank = abs(srcRank - dstRank)
+    let off = dst - src  //offset from src to dst
+    let dist = (offFile > offRank) ? offFile : offRank
+    off = off / dist
+    return off
   }
 
   #calcPawnMoves(pieceSrc, offsets) {
@@ -327,7 +322,7 @@ class Game {
     offsets.forEach(off => {
       let move = off + pieceIdx
       let pieceDst = pieces[move]
-      if (!this.#isInBoard(move)) return // out of board
+      if (!this.board.isInBoard(move)) return // out of board
 
       // forward move
       if (off % 10 === 0) {
@@ -337,7 +332,7 @@ class Game {
         move += off
         pieceDst = pieces[move] // 2 steps forward
 
-        if (pieceSrc.firstMove && pieceDst === PIECES.EMPTY && this.#isInBoard(move)) {
+        if (pieceSrc.firstMove && pieceDst === PIECES.EMPTY && this.board.isInBoard(move)) {
           pieceSrc.legalMoves.push(move)
         }
       } else {
@@ -355,7 +350,7 @@ class Game {
 
     offsets.forEach(off => {
       let move = off + pieceIdx
-      while (this.#isInBoard(move)) {
+      while (this.board.isInBoard(move)) {
         let pieceDst = pieces[move]
         if (pieceDst === PIECES.EMPTY) {
           pieceSrc.legalMoves.push(move)
@@ -381,7 +376,7 @@ class Game {
 
     offsets.forEach(off => {
       let moveIdx = off + idxCell
-      while (this.#isInBoard(moveIdx)) {
+      while (this.board.isInBoard(moveIdx)) {
         let pieceDst = pieces[moveIdx]
         if (pieceDst !== PIECES.EMPTY) { // there is a piece
           let pieceDstColor = pieceDst & COLORS.WHITE
@@ -403,7 +398,7 @@ class Game {
 
     offsets.forEach(off => {
       let moveIdx = off + idxCell
-      if (!this.#isInBoard(moveIdx)) return
+      if (!this.board.isInBoard(moveIdx)) return
 
       let pieceDst = pieces[moveIdx]
       if (pieceDst !== PIECES.EMPTY) { // there is a piece
@@ -444,7 +439,7 @@ class Game {
 
     offsets.forEach(off => {
       let move = off + pieceIdx
-      if (!this.#isInBoard(move)) return
+      if (!this.board.isInBoard(move)) return
       // if('move' in check) return
 
       let pieceDst = pieces[move]
@@ -461,7 +456,7 @@ class Game {
 
     offsets.forEach(off => {
       let move = off + pieceIdx
-      if (!this.#isInBoard(move)) return
+      if (!this.board.isInBoard(move)) return
 
       let pieceDst = pieces[move]
       let pieceDstColor = pieceDst & COLORS.WHITE
@@ -487,10 +482,6 @@ class Game {
       let element = this.board.getElementByIdx(idx)
       element.classList.remove('legal-move')
     });
-  }
-
-  #isInBoard(idx) {
-    return (this.board.pieces[idx] !== PIECES.OUT_OF_BOARD)
   }
 
   #whitePawnPromotion(piece) {

@@ -10,7 +10,7 @@ class Board {
   /*
     Returns {idx, price} of a coordinate
   */
-  getPiece (file, rank) {
+  getPiece(file, rank) {
     let idx = this.fileAndRankToIdx(file, rank)
     let pieceType = this.pieces[idx]
     let pieceColor = pieceType & COLORS.WHITE
@@ -18,7 +18,7 @@ class Board {
     let piece = null
     let piecesArray = (pieceColor === COLORS.WHITE) ? this.whitePieces : this.blackPieces
 
-    for(let i = 0; i < piecesArray.length; ++i) {
+    for (let i = 0; i < piecesArray.length; ++i) {
 
       if (piecesArray[i].file === file && piecesArray[i].rank === rank) {
         piece = piecesArray[i]
@@ -29,14 +29,14 @@ class Board {
     return { idx: idx, piece: piece }
   }
 
-  getPieceByIdx (idx) {
+  getPieceByIdx(idx) {
     let pieceType = this.pieces[idx]
     let pieceColor = pieceType & COLORS.WHITE
-    let {file, rank} = this.idxToFileAndRank(idx)
+    let { file, rank } = this.idxToFileAndRank(idx)
     let piece = null
     let piecesArray = (pieceColor === COLORS.WHITE) ? this.whitePieces : this.blackPieces
 
-    for(let i = 0; i < piecesArray.length; ++i) {
+    for (let i = 0; i < piecesArray.length; ++i) {
 
       if (piecesArray[i].file === file && piecesArray[i].rank === rank) {
         piece = piecesArray[i]
@@ -48,7 +48,7 @@ class Board {
   }
 
   whiteKing() {
-    for(let i = 0; i < this.whitePieces.length; ++i) {
+    for (let i = 0; i < this.whitePieces.length; ++i) {
 
       if (this.whitePieces[i].type === PIECES.KING) {
         return this.whitePieces[i]
@@ -58,7 +58,7 @@ class Board {
   }
 
   blackKing() {
-    for(let i = 0; i < this.blackPieces.length; ++i) {
+    for (let i = 0; i < this.blackPieces.length; ++i) {
 
       if (this.blackPieces[i].type === PIECES.KING) {
         return this.blackPieces[i]
@@ -77,9 +77,9 @@ class Board {
   #drawBoard() {
     this.element.innerHTML = ''
 
-    for(let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
-      for(let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
-        const cell_id = `cell-${String.fromCharCode(65 + file)}${rank+1}`
+    for (let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
+      for (let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
+        const cell_id = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
         const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
         const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
 
@@ -90,7 +90,7 @@ class Board {
     }
   }
 
-  initFromFENNotation (fen_string) {
+  initFromFENNotation(fen_string) {
     let gameInfo = {
       colorToPlay: null,
       whiteCastle: null,
@@ -100,17 +100,17 @@ class Board {
     this.pieces = new Array(120)
     let rank = 0;
     let file = 0;
-    for(let i = 0; i < this.pieces.length; ++i)
+    for (let i = 0; i < this.pieces.length; ++i)
       this.pieces[i] = PIECES.OUT_OF_BOARD
 
     let stridx = 0
-    for(let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
-      for(let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
+    for (let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
+      for (let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
         const idx = this.fileAndRankToIdx(file, rank)
 
         let blanks = parseInt(fen_string[stridx])
-        if(!Number.isNaN(blanks)) {
-          while(blanks > 0) {
+        if (!Number.isNaN(blanks)) {
+          while (blanks > 0) {
             const idx = this.fileAndRankToIdx(file, rank)
             this.pieces[idx] = PIECES.EMPTY // new Piece({ type: PIECES.EMPTY, file: file, rank: rank, color: null })
             // this.#addEventListenersToPiece(idx)
@@ -186,7 +186,7 @@ class Board {
 
           default:
             console.log(`default switch fen string: ${fen_string[stridx]}`)
-            // --file
+          // --file
         }
         // this.#addEventListenersToPiece(idx)
         ++stridx;
@@ -253,40 +253,74 @@ class Board {
     return gameInfo
   }
 
-  fileAndRankToIdx (file, rank) {
+  fileAndRankToIdx(file, rank) {
     return (rank * 10 + file) + 21
   }
 
-  idxToFileAndRank (idx) {
+  idxToFileAndRank(idx) {
     let file = (idx - 21) % 10
     let rank = (idx - 21 - file) / 10
     return { file: file, rank: rank }
   }
 
-  getElementByIdx (idx) {
+  getElementByIdx(idx) {
     let { file, rank } = this.idxToFileAndRank(idx)
     let element = this.getElementByFileAndRank(file, rank)
 
     return element
   }
 
-  getElementByFileAndRank (file, rank) {
-    let elementId = `cell-${String.fromCharCode(65 + file)}${rank+1}`
+  getElementByFileAndRank(file, rank) {
+    let elementId = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
     let element = document.getElementById(elementId)
 
     return element
   }
 
-  removePiece (piece) {
+  removePiece(piece) {
     if (!piece) return
 
     piece.element.classList.remove(piece.cssClass)
     let piecesArray = (piece.color === COLORS.WHITE) ? this.whitePieces : this.blackPieces
 
-    for(let i = 0; i < piecesArray.length; ++i) {
+    for (let i = 0; i < piecesArray.length; ++i) {
       if (piecesArray[i].file === piece.file && piecesArray[i].rank === piece.rank) {
         piecesArray.splice(i, i)
       }
     }
+  }
+
+  isInBoard(idx) {
+    return (this.pieces[idx] !== PIECES.OUT_OF_BOARD)
+  }
+
+  sameDiagonal(idx1, idx2) {
+    let { file: r1, rank: c1 } = this.idxToFileAndRank(idx1)
+    let { file: r2, rank: c2 } = this.idxToFileAndRank(idx2)
+    return (abs(r1 - r2) === abs(c1 - c2))
+  }
+
+  sameRowOrCol(idx1, idx2) {
+    let { file: r1, rank: c1 } = this.idxToFileAndRank(idx1)
+    let { file: r2, rank: c2 } = this.idxToFileAndRank(idx2)
+    return (r1 === r2 || c1 === c2)
+  }
+
+  /*
+    Return idx cells from src to dst trying all offsets
+    it includes idxDst but not idxSrc
+  */
+  getMovesFromTo(idxSrc, idxDst, offsets) {
+    let moves = []
+    for (let off of offsets) {
+      let move = off + idxSrc
+      moves = []
+      while (this.isInBoard(move)) {
+        moves.push(move)
+        if (move === idxDst) return moves
+        move += off
+      }
+    }
+    return moves
   }
 }
