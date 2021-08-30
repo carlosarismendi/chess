@@ -44,6 +44,7 @@ func NewGame(p1Conn *websocket.Conn, p2Conn *websocket.Conn) *Game {
 			Color: "Black",
 			Conn:  p2Conn,
 		},
+		Player1Plays: true,
 	}
 }
 
