@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 var (
@@ -14,11 +13,12 @@ var (
 
 func main() {
 	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	e.Static("/", "../web")
 
-	e.GET("/ws", CreateGame)
-	// e.GET("/new-game", CreateGame)
+	// e.Use(middleware.Logger())
+	// e.Use(middleware.Recover())
+
+	e.GET("/new-game", CreateGame)
 	e.GET("/join-game/:token", JoinGame)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", host, port)))
