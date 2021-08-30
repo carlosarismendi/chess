@@ -50,10 +50,11 @@ func NewGame(p1Conn *websocket.Conn, p2Conn *websocket.Conn) *Game {
 func (g *Game) Start(c echo.Context) (errP1 error, errP2 error) {
 	data := make(map[string]interface{})
 	data["gamestart"] = true
-	data["player1color"] = g.Player1.Color
-	data["player2color"] = g.Player2.Color
+	data["color"] = g.Player1.Color
 
 	errP1 = SendSocketMessage(c, g.Player1.Conn, data)
+
+	data["color"] = g.Player2.Color
 	errP2 = SendSocketMessage(c, g.Player2.Conn, data)
 	return
 }
