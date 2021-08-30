@@ -1,7 +1,8 @@
 class Game {
-  constructor({ selector, fen_string }) {
+  constructor({ selector, fen_string, host=null, connPath=null }) {
     this.boardSelector = selector
     this.board = new Board({ selector: selector })
+    this.createWebSocketConnection(host, connPath)
 
     let gameInfo = this.board.initFromFENNotation(fen_string)
     this.colorToPlay = gameInfo.colorToPlay
@@ -15,6 +16,20 @@ class Game {
     this.whiteTimer = new Timer({ selector: 'white-timer', minutes: 10 })
     this.whiteTimer.start()
     this.blackTimer = new Timer({ selector: 'black-timer', minutes: 10 })
+  }
+
+  createWebSocketConnection(host, connPath) {
+    if (!host || !connPath) {
+      this.wsConn = null
+      return
+    }
+
+    if (this.wsConn) {
+      this.wsConn.close()
+    }
+
+    this.wsConn = new WebSocket(`ws://${host}/${connPath}`, )
+    this.wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 
   restart() {
@@ -76,6 +91,9 @@ class Game {
 
   #drop(fileDst, rankDst, event) {
     event.preventDefault();
+    if (this.colorToPlay !== this.playerColor)
+      return
+
     let pieces = this.board.pieces
 
     // Target cell gets data from piece of source cell
@@ -95,8 +113,22 @@ class Game {
   #move(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
 
     // Check if movement is valid
-    if (!pieceSrc.legalMoves.includes(idxDst))
+    if (!pieceSrc.legalMoves.includes(idxDst)) {
+      this.wsConn.send({ legalmove: false })
       return
+    }
+
+    // let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDs: fileDst, rankDst: rankDst })
+    let payload = {
+      filesrc: pieceSrc.file, ranksrc: pieceSrc.rank, filedst: fileDst, rankdst: rankDst,
+      legalmove: false, checkmate: false, abandon: false, creategame: false
+    }
+    // console.log(JSON.stringify(payload))
+    const payload2 = JSON.stringify(payload)
+    console.log(payload2)
+    this.wsConn.send(payload2)
+    // console.log(payload.toJson())
+    // this.wsConn.send(payload.toJson())
 
     this.board.removePiece(pieceDst)
 
@@ -511,5 +543,41 @@ class Game {
       this.blackTimer.element.classList.add('timer-stop')
       this.colorToPlay = COLORS.WHITE
     }
+  }
+
+  #onwsmessage(event) {
+    let msg = JSON.parse(event.data)
+    console.log(msg)
+
+    if (msg.errorcode) {
+      console.error(msg)
+      return
+    }
+
+    if (msg.url) {
+      this.gameUrl = msg.url
+      return
+    }
+
+    if (msg.abandon) {
+
+    }
+
+    if (msg.gamestart) {
+      this.playerColor = (msg.color == "White") ? COLORS.WHITE : COLORS.BLACK
+      this.restart()
+      return
+    }
+
+    let { idx: idxSrc, piece: pieceSrc } = this.board.getPiece(msg.filesrc, msg.ranksrc)
+    let { idx: idxDst, piece: pieceDst } = this.board.getPiece(msg.filedst, msg.rankdst)
+
+    // Illegal move
+    if (pieceSrc && pieceSrc.color === this.playerColor) {
+      this.wsConn.send({ legalmove: false })
+      return
+    }
+
+    this.#move(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
   }
 }

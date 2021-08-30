@@ -23,7 +23,8 @@
 
     <!-- Chess board buttons -->
     <div>
-      <button type="button" class="btn btn-primary" onclick="newGame()">New game</button>
+      <button id="new-game" type="button" class="btn btn-primary" onclick="newGame()">New game</button>
+      <button id="invitation-link" type="button" onclick="copyInivitationLink()" class="btn btn-primary">Play with friends</button>
     </div>
   </div>
 
@@ -33,6 +34,7 @@
   <script src="scripts/Piece.js"></script>
   <script src="scripts/Board.js"></script>
   <script src="scripts/Timer.js"></script>
+  <script src="scripts/ChessWS.js"></script>
   <script src="scripts/Game.js"></script>
   <script src="scripts/index.js"></script>
 </body>
