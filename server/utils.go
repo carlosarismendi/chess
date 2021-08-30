@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -8,6 +9,7 @@ import (
 )
 
 func SendSocketMessage(c echo.Context, ws *websocket.Conn, msg interface{}) error {
+	fmt.Printf("#### SEND-MSG: %v\n", msg)
 	err := websocket.JSON.Send(ws, msg)
 	if err != nil {
 		c.Logger().Error(err)
@@ -20,6 +22,7 @@ func SendSocketMessage(c echo.Context, ws *websocket.Conn, msg interface{}) erro
 func ReceiveSocketMessage(c echo.Context, ws *websocket.Conn) (MessageWS, error) {
 	msg := MessageWS{}
 	err := websocket.JSON.Receive(ws, &msg)
+	fmt.Printf("#### RECEIVE-MSG: %v\n", msg)
 	if err != nil {
 		c.Logger().Error(err)
 		SendError(c, ws, http.StatusBadRequest)

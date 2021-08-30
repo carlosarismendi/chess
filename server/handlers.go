@@ -33,7 +33,7 @@ func generateToken() string {
 func generateInvitationLink(c echo.Context) (string, string) {
 	host := c.Echo().Server.Addr
 	token := generateToken()
-	return token, fmt.Sprintf("%s/%s", host, token)
+	return token, fmt.Sprintf("%s/?token=%s", host, token)
 }
 
 func CreateGame(c echo.Context) error {
