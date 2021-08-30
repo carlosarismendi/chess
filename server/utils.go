@@ -32,8 +32,10 @@ func ReceiveSocketMessage(c echo.Context, ws *websocket.Conn) (MessageWS, error)
 	return msg, nil
 }
 
-func SendError(c echo.Context, ws *websocket.Conn, httpStatusCode int) error {
-	err := websocket.Message.Send(ws, httpStatusCode)
+func SendError(c echo.Context, ws *websocket.Conn, errorCode int) error {
+	payload := make(map[string]int)
+	payload["errorcode"] = errorCode
+	err := websocket.JSON.Send(ws, payload)
 	if err != nil {
 		c.Logger().Error(err)
 		return err
