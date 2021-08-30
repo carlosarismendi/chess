@@ -42,3 +42,27 @@ func SendError(c echo.Context, ws *websocket.Conn, errorCode int) error {
 	}
 	return nil
 }
+func ReceiveAndSendSocketMessage(c echo.Context, wsIn *websocket.Conn, wsOut *websocket.Conn) {
+	msg := MessageWS{}
+	err := websocket.JSON.Receive(wsIn, &msg)
+	fmt.Printf("#### MSG IN: %v\n", msg)
+	if err != nil {
+		fmt.Println("xd")
+		return
+		// c.Logger().Error(err)
+		// SendError(c, wsIn, http.StatusBadRequest)
+		// return msg, err
+	}
+
+	fmt.Printf("#### MS OUT: %v\n", msg)
+	err = websocket.JSON.Send(wsOut, msg)
+	if err != nil {
+		fmt.Println("xd")
+		//     c.Logger().Error(err)
+		//     SendError(c, ws, http.StatusInternalServerError)
+		return
+	}
+
+	// return
+	// return msg, nil
+}
