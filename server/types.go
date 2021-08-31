@@ -32,6 +32,7 @@ type Game struct {
 	Player1      Player
 	Player2      Player
 	Player1Plays bool
+	Turn         chan bool
 }
 
 func NewGame(p1Conn *websocket.Conn, p2Conn *websocket.Conn) *Game {
@@ -45,6 +46,7 @@ func NewGame(p1Conn *websocket.Conn, p2Conn *websocket.Conn) *Game {
 			Conn:  p2Conn,
 		},
 		Player1Plays: true,
+		Turn:         make(chan bool, 1),
 	}
 }
 

@@ -71,10 +71,14 @@ func CreateGame(c echo.Context) error {
 		// }
 		// playGame(c, game, "Player 1")
 		for {
-			_, stillValid := games[token]
-			if !stillValid {
-				break
-			}
+			<-game.Turn
+			ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
+			game.Turn <- true
+			// game.Player1Plays = false
+			// _, stillValid := games[token]
+			// if !stillValid {
+			// 	break
+			// }
 		}
 	}).ServeHTTP(c.Response(), c.Request())
 
@@ -106,11 +110,11 @@ func JoinGame(c echo.Context) error {
 		}
 
 		fmt.Printf("### Joining game: %v\n", *game)
+		game.Turn <- true
 		for {
-			ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
-			game.Player1Plays = false
+			<-game.Turn
 			ReceiveAndSendSocketMessage(c, game.Player2.Conn, game.Player1.Conn)
-			game.Player1Plays = true
+			game.Turn <- true
 		}
 
 		// removeGame(token)
