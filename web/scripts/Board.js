@@ -1,7 +1,7 @@
 class Board {
-  constructor({ selector }) {
+  constructor({ selector, colorDown }) {
     this.element = document.querySelector(selector)
-    this.#drawBoard()
+    this.#drawBoard(colorDown)
     this.whitePieces = []
     this.blackPieces = []
     this.pieces = []
@@ -74,20 +74,42 @@ class Board {
     return this.blackKing()
   }
 
-  #drawBoard() {
+  #drawBoard(colorDown) {
     this.element.innerHTML = ''
 
-    for (let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
-      for (let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
-        const cell_id = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
-        const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
-        const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
+    if (colorDown === COLORS.WHITE) {
+      for (let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
+        for (let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
+          // const cell_id = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
+          // const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
+          // const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
+          const cell = this.#createCell(file, rank)
+          this.element.innerHTML += cell
+        }
 
-        this.element.innerHTML += cell
+        this.element.innerHTML += '\n'
       }
+    } else {
+      for (let rank = RANKS.RANK_1; rank <= RANKS.RANK_8; ++rank) {
+        for (let file = FILES.FILE_H; file >= FILES.FILE_A; --file) {
+          // const cell_id = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
+          // const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
+          // const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
+          const cell = this.#createCell(file, rank)
+          this.element.innerHTML += cell
+        }
 
-      this.element.innerHTML += '\n'
+        this.element.innerHTML += '\n'
+      }
     }
+  }
+
+  #createCell(file, rank) {
+    const cell_id = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
+    const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
+    const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
+
+    return cell
   }
 
   initFromFENNotation(fen_string) {

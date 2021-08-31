@@ -1,7 +1,8 @@
 class Game {
   constructor({ selector, fen_string, host=null, connPath=null }) {
     this.boardSelector = selector
-    this.board = new Board({ selector: selector })
+    this.playerColor = COLORS.WHITE
+    this.board = new Board({ selector: selector, colorDown: this.playerColor })
     this.createWebSocketConnection(host, connPath)
 
     let gameInfo = this.board.initFromFENNotation(fen_string)
@@ -33,7 +34,7 @@ class Game {
   }
 
   restart() {
-    this.board = new Board({ selector: this.boardSelector })
+    this.board = new Board({ selector: this.boardSelector, colorDown: this.playerColor })
 
     let gameInfo = this.board.initFromFENNotation(INITIAL_POSITION_FEN)
     this.colorToPlay = gameInfo.colorToPlay
