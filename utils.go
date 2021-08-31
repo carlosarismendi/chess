@@ -9,7 +9,6 @@ import (
 )
 
 func SendSocketMessage(c echo.Context, ws *websocket.Conn, msg interface{}) error {
-	fmt.Printf("#### SEND-MSG: %v\n", msg)
 	err := websocket.JSON.Send(ws, msg)
 	if err != nil {
 		c.Logger().Error(err)
@@ -22,7 +21,6 @@ func SendSocketMessage(c echo.Context, ws *websocket.Conn, msg interface{}) erro
 func ReceiveSocketMessage(c echo.Context, ws *websocket.Conn) (MessageWS, error) {
 	msg := MessageWS{}
 	err := websocket.JSON.Receive(ws, &msg)
-	fmt.Printf("#### RECEIVE-MSG: %v\n", msg)
 	if err != nil {
 		c.Logger().Error(err)
 		SendError(c, ws, http.StatusBadRequest)
@@ -45,13 +43,11 @@ func SendError(c echo.Context, ws *websocket.Conn, errorCode int) error {
 func ReceiveAndSendSocketMessage(c echo.Context, wsIn *websocket.Conn, wsOut *websocket.Conn) bool {
 	msg := MessageWS{}
 	err := websocket.JSON.Receive(wsIn, &msg)
-	fmt.Printf("#### MSG IN: %v\n", msg)
 	if err != nil {
 		c.Logger().Error(err)
 		return true
 	}
 
-	fmt.Printf("#### MS OUT: %v\n", msg)
 	err = websocket.JSON.Send(wsOut, msg)
 	if err != nil {
 		c.Logger().Error(err)
