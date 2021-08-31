@@ -26,7 +26,6 @@ func removeGame(token string) {
 	if exits {
 		delete(games, token)
 	}
-	fmt.Printf("### Games: %v\n", games)
 	lock.Unlock()
 }
 
@@ -66,8 +65,6 @@ func CreateGame(c echo.Context) error {
 
 		game := NewGame(ws, nil)
 		addGame(token, game)
-
-		fmt.Printf("### Creating game: %v\n", *game)
 
 		for {
 			select {
@@ -114,7 +111,6 @@ func JoinGame(c echo.Context) error {
 			return
 		}
 
-		fmt.Printf("### Joining game: %v\n", *game)
 		game.Turn <- true
 		for {
 			<-game.Turn
