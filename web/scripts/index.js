@@ -19,7 +19,7 @@ function init () {
 
 function newGame () {
   game.createWebSocketConnection(host, 'new-game')
-  game.restart()
+  // game.restart()
 }
 
 function copyInivitationLink(event) {
