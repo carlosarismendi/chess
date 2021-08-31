@@ -4,6 +4,9 @@ const host = window.location.host
 window.onload = init
 
 function init () {
+  window.addEventListener("win", displayWin)
+  window.addEventListener("lose", displayLose)
+
   game = new Game({ selector: '#board', fen_string: INITIAL_POSITION_FEN, wsConn: null })
 
   // fen_string = "3r2kb/4q2p/p3p1pQ/1p4N1/2n2RP1/4P2P/KP1r4/3N1R2 w -- - 0 1"
@@ -27,4 +30,12 @@ function copyInivitationLink(event) {
 
   navigator.clipboard.writeText(game.gameUrl)
   alert(`Inivitation link copied to clipboard:\n${game.gameUrl}`)
+}
+
+function displayWin(event) {
+  console.log("you win")
+}
+
+function displayLose(event) {
+  console.log("you lose")
 }

@@ -17,6 +17,7 @@ type MessageWS struct {
 	CheckMate  bool `json:"checkmate"`
 	Abandon    bool `json:"abandon"`
 	CreateGame bool `json:"creategame"`
+	TimeOut    bool `json:"timeout"`
 }
 
 func (m *MessageWS) toJSON() ([]byte, error) {

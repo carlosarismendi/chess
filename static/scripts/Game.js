@@ -1,5 +1,5 @@
 class Game {
-  constructor({ selector, fen_string, host=null, connPath=null, duration=10 }) {
+  constructor({ selector, fen_string, host=null, connPath=null, duration=1 }) {
     this.boardSelector = selector
     this.playerColor = COLORS.WHITE
     this.board = new Board({ selector: selector, colorDown: this.playerColor })
@@ -17,6 +17,19 @@ class Game {
     this.whiteTimer = new Timer({ selector: 'up-timer', minutes: duration })
     this.blackTimer = new Timer({ selector: 'down-timer', minutes: duration })
     this.duration = duration
+
+    window.addEventListener('timeout', ((event) => {
+      console.log(event)
+      let colorTimer = event.detail.colorTimer
+      if (colorTimer === this.playerColor) {
+        this.sendWebSocketMessage({ timeout: true })
+
+        window.dispatchEvent(new Event("lose"))
+      } else {
+        window.dispatchEvent(new Event("win"))
+      }
+      this.wsConn.close()
+    }).bind(this))
   }
 
   createWebSocketConnection(host, connPath) {
@@ -54,11 +67,11 @@ class Game {
     this.#addEventListenersToPieces()
 
     if (this.playerColor === COLORS.WHITE) {
-      this.whiteTimer = new Timer({ selector: 'down-timer', minutes: this.duration })
-      this.blackTimer = new Timer({ selector: 'up-timer', minutes: this.duration })
+      this.whiteTimer = new Timer({ selector: 'down-timer', minutes: this.duration, colorTimer: COLORS.WHITE })
+      this.blackTimer = new Timer({ selector: 'up-timer', minutes: this.duration, colorTimer: COLORS.BLACK })
     } else {
-      this.whiteTimer = new Timer({ selector: 'up-timer', minutes: this.duration })
-      this.blackTimer = new Timer({ selector: 'down-timer', minutes: this.duration })
+      this.whiteTimer = new Timer({ selector: 'up-timer', minutes: this.duration, colorTimer: COLORS.WHITE })
+      this.blackTimer = new Timer({ selector: 'down-timer', minutes: this.duration, colorTimer: COLORS.BLACK })
     }
 
     this.whiteTimer.start()
