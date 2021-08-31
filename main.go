@@ -13,7 +13,7 @@ var (
 
 func main() {
 	e := echo.New()
-	e.Static("/", "../web")
+	e.Static("/", "static")
 
 	// e.Use(middleware.Logger())
 	// e.Use(middleware.Recover())
