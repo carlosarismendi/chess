@@ -31,6 +31,9 @@ class Game {
       }
       this.wsConn.close()
     }).bind(this))
+
+    this.lastMoveSrc = null
+    this.lastMoveDst = null
   }
 
   createWebSocketConnection(host, connPath) {
@@ -156,6 +159,8 @@ class Game {
       return
     }
 
+    this.#showLastMove(idxSrc, idxDst)
+
     // let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDs: fileDst, rankDst: rankDst })
     let payload = {
       filesrc: pieceSrc.file, ranksrc: pieceSrc.rank, filedst: fileDst, rankdst: rankDst,
@@ -204,6 +209,8 @@ class Game {
   }
 
   #moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
+    this.#showLastMove(idxSrc, idxDst)
+
     this.board.removePiece(pieceDst)
 
     pieceSrc.firstMove = false
@@ -655,6 +662,23 @@ class Game {
       let element = this.board.getElementByIdx(idx)
       element.classList.remove('legal-move')
     });
+  }
+
+  async #showLastMove(idxSrc, idxDst) {
+    this.#hideLastMove()
+
+    this.lastMoveSrc = this.board.getElementByIdx(idxSrc)
+    this.lastMoveDst = this.board.getElementByIdx(idxDst)
+
+    this.lastMoveSrc.classList.add('last-move')
+    this.lastMoveDst.classList.add('last-move')
+  }
+
+  async #hideLastMove() {
+    if(this.lastMoveSrc && this.lastMoveDst) {
+      this.lastMoveSrc.classList.remove('last-move')
+      this.lastMoveDst.classList.remove('last-move')
+    }
   }
 
   #PawnPromotion(piece, idx) {

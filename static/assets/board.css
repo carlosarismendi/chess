@@ -25,6 +25,14 @@
   content: url('legal-move.png')!important;
 }
 
+.board-cell.white.last-move {
+  background-color: rgb(255, 255, 0);
+}
+
+.board-cell.black.last-move {
+  background-color: rgb(255, 255, 0);
+}
+
 .board-cell.white {
   background-color: #fff;
 }
