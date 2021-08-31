@@ -29,7 +29,8 @@ class Game {
       this.wsConn.close()
     }
 
-    this.wsConn = new WebSocket(`wss://${host}/${connPath}`, )
+    const protocol = (window.location.protocol.includes("s")) ? "wss" : "ws"
+    this.wsConn = new WebSocket(`${protocol}://${host}/${connPath}`, )
     this.wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 

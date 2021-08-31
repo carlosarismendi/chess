@@ -45,7 +45,8 @@ func generateToken() string {
 }
 
 func generateInvitationLink(c echo.Context, token string) string {
-	host := c.Echo().Server.Addr
+	host := c.Request().Host
+	// fmt.Println(host)
 	return fmt.Sprintf("%s/?token=%s", host, token)
 }
 
