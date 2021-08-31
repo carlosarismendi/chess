@@ -475,6 +475,11 @@ class Game {
         pieceSrc.legalMoves.push(move)
       }
     })
+    /*
+    - rank 4 white, 3 black
+    - pawn left or right
+    - last move was double jump
+    */
   }
 
   #calcLongRangePieceMoves(pieceSrc, offsets) {
