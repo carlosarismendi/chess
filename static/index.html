@@ -8,10 +8,20 @@
 
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/board.css">
+  <link rel="stylesheet" href="assets/modal.css">
 
 </head>
 <body>
   <div class="container">
+    <!-- Modal -->
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <span id="close-modal" class="close" onclick="hideModal()">&times;</span>
+        <p id="modal-title" class="modal-title">You win</p>
+        <p id="modal-body" class="modal-body">You win because of time</p>
+      </div>
+    </div>
+
     <!-- Black timer   -->
     <div id="up-timer" class="timer timer-stop">10:00</div>
 

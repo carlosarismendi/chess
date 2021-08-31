@@ -19,14 +19,15 @@ class Game {
     this.duration = duration
 
     window.addEventListener('timeout', ((event) => {
-      console.log(event)
       let colorTimer = event.detail.colorTimer
       if (colorTimer === this.playerColor) {
         this.sendWebSocketMessage({ timeout: true })
 
-        window.dispatchEvent(new Event("lose"))
+        let detail = { title: 'You lose', body: 'You lose because of time.' }
+        window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
       } else {
-        window.dispatchEvent(new Event("win"))
+        let detail = { title: 'You win', body: 'You win because of time.' }
+        window.dispatchEvent(new CustomEvent("win", { detail: detail }))
       }
       this.wsConn.close()
     }).bind(this))
