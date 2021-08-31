@@ -1,9 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/websocket"
@@ -18,6 +20,15 @@ func addGame(token string, game *Game) {
 	lock.Unlock()
 }
 
+func removeGame(token string) {
+	lock.Lock()
+	_, exits := games[token]
+	if exits {
+		delete(games, token)
+	}
+	lock.Unlock()
+}
+
 func getGame(token string) (game *Game, exists bool) {
 	lock.RLock()
 	game, exists = games[token]
@@ -27,13 +38,14 @@ func getGame(token string) (game *Game, exists bool) {
 }
 
 func generateToken() string {
-	return "mitoken"
+	currentDateStr := time.Now().String()
+	token := md5.Sum([]byte(currentDateStr))
+	return fmt.Sprintf("%x", token)
 }
 
-func generateInvitationLink(c echo.Context) (string, string) {
+func generateInvitationLink(c echo.Context, token string) string {
 	host := c.Echo().Server.Addr
-	token := generateToken()
-	return token, fmt.Sprintf("%s/?token=%s", host, token)
+	return fmt.Sprintf("%s/?token=%s", host, token)
 }
 
 func CreateGame(c echo.Context) error {
@@ -41,7 +53,8 @@ func CreateGame(c echo.Context) error {
 		// defer ws.Close()
 
 		// Returns invitation link to the user who created the game
-		token, url := generateInvitationLink(c)
+		token := generateToken()
+		url := generateInvitationLink(c, token)
 		data := make(map[string]string)
 		data["url"] = url
 		err := SendSocketMessage(c, ws, data)
@@ -58,6 +71,10 @@ func CreateGame(c echo.Context) error {
 		// }
 		// playGame(c, game, "Player 1")
 		for {
+			_, stillValid := games[token]
+			if !stillValid {
+				break
+			}
 		}
 	}).ServeHTTP(c.Response(), c.Request())
 
@@ -95,74 +112,9 @@ func JoinGame(c echo.Context) error {
 			ReceiveAndSendSocketMessage(c, game.Player2.Conn, game.Player1.Conn)
 			game.Player1Plays = true
 		}
-		// playGame(c, game, "Player 2")
+
+		// removeGame(token)
 	}).ServeHTTP(c.Response(), c.Request())
 
 	return nil
-}
-
-func playGame(c echo.Context, game *Game, algo string) {
-	p1 := game.Player1
-	p2 := game.Player2
-
-	for {
-		fmt.Printf("#### %s", algo)
-		// // Player1 abandons game
-		// if msgP1.Abandon {
-		// 	SendSocketMessage(c, p2.Conn, msgP1)
-		// 	break
-		// }
-
-		// // Player2 abandons game
-		// if msgP2.Abandon {
-		// 	SendSocketMessage(c, p1.Conn, msgP2)
-		// 	break
-		// }
-
-		// Player 1 plays
-		if game.Player1Plays {
-			// Player1 message
-			msgP1, err := ReceiveSocketMessage(c, p1.Conn)
-			if err != nil {
-				break
-			}
-
-			SendSocketMessage(c, p2.Conn, msgP1)
-
-			// data := make(map[string]interface{})
-			// data["gamestart"] = true
-			// data["color"] = game.Player1.Color
-			// SendSocketMessage(c, p2.Conn, data)
-			// Player2 movement validation
-			// msgP2, err = ReceiveSocketMessage(c, p2.Conn)
-			// if err != nil {
-			// 	break
-			// }
-
-			// if !msgP2.LegalMove {
-			// 	SendSocketMessage(c, p1.Conn, msgP2)
-			// 	break
-			// }
-		} else {
-			// Player2 message
-			msgP2, err := ReceiveSocketMessage(c, p2.Conn)
-			if err != nil {
-				break
-			}
-
-			// Player 2 plays
-			SendSocketMessage(c, p1.Conn, msgP2)
-
-			// Player1 movement validation
-			// msgP1, err = ReceiveSocketMessage(c, p1.Conn)
-			// if err != nil {
-			// 	break
-			// }
-
-			// if !msgP1.LegalMove {
-			// 	SendSocketMessage(c, p2.Conn, msgP1)
-			// 	break
-			// }
-		}
-	}
 }
