@@ -6,7 +6,7 @@ window.onclick = (event) => {
   let modal = document.getElementById('modal')
   if (event.target == modal)
   {
-    modalElem.style.display = 'none'
+    modal.style.display = 'none'
   }
 }
 
