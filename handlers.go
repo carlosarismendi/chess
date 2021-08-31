@@ -70,10 +70,10 @@ func CreateGame(c echo.Context) error {
 
 		for {
 			<-game.Turn
-			checkmate := ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
+			endGame := ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
 			game.Turn <- true
 
-			if checkmate {
+			if endGame {
 				break
 			}
 		}
@@ -112,10 +112,10 @@ func JoinGame(c echo.Context) error {
 		game.Turn <- true
 		for {
 			<-game.Turn
-			checkmate := ReceiveAndSendSocketMessage(c, game.Player2.Conn, game.Player1.Conn)
+			endGame := ReceiveAndSendSocketMessage(c, game.Player2.Conn, game.Player1.Conn)
 			game.Turn <- true
 
-			if checkmate {
+			if endGame {
 				break
 			}
 		}

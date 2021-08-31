@@ -15,8 +15,8 @@ type MessageWS struct {
 	RankDst    int  `json:"rankdst"`
 	LegalMove  bool `json:"legalmove"`
 	CheckMate  bool `json:"checkmate"`
-	Abandon    bool `json:"abandon"`
 	CreateGame bool `json:"creategame"`
+	Abandon    bool `json:"abandon"`
 	TimeOut    bool `json:"timeout"`
 }
 

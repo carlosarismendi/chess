@@ -47,21 +47,16 @@ func ReceiveAndSendSocketMessage(c echo.Context, wsIn *websocket.Conn, wsOut *we
 	err := websocket.JSON.Receive(wsIn, &msg)
 	fmt.Printf("#### MSG IN: %v\n", msg)
 	if err != nil {
-		fmt.Println("xd")
+		c.Logger().Error(err)
 		return true
-		// c.Logger().Error(err)
-		// SendError(c, wsIn, http.StatusBadRequest)
-		// return msg, err
 	}
 
 	fmt.Printf("#### MS OUT: %v\n", msg)
 	err = websocket.JSON.Send(wsOut, msg)
 	if err != nil {
-		fmt.Println("xd")
-		//     c.Logger().Error(err)
-		//     SendError(c, ws, http.StatusInternalServerError)
+		c.Logger().Error(err)
 		return true
 	}
 
-	return msg.CheckMate
+	return msg.CheckMate || msg.TimeOut || msg.Abandon
 }

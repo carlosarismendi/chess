@@ -24,6 +24,12 @@ function init () {
 
 function newGame () {
   game.createWebSocketConnection(host, 'new-game')
+  let evt = { detail: { title: 'Game created', body: `Click on "Play with friends" to obtain the share link.` }}
+  showModal(evt)
+}
+
+function abandonGame () {
+  game.abandonGame()
 }
 
 function copyInivitationLink() {

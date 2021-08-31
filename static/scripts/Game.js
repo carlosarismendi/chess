@@ -34,6 +34,7 @@ class Game {
 
     this.lastMoveSrc = null
     this.lastMoveDst = null
+    this.gameStarted = false
   }
 
   createWebSocketConnection(host, connPath) {
@@ -79,6 +80,7 @@ class Game {
     }
 
     this.whiteTimer.start()
+    this.gameStarted = true
   }
 
   #addEventListenersToPieces() {
@@ -704,11 +706,15 @@ class Game {
     }
   }
 
+  #stopTimers() {
+    this.whiteTimer.pause()
+      this.blackTimer.pause()
+  }
+
   #onwsmessage(event) {
     let msg = JSON.parse(event.data)
-    console.log(msg)
 
-    if (msg.errorcode) {
+    if (msg.errorcode || (typeof msg) == 'number') {
       return
     }
 
@@ -718,7 +724,17 @@ class Game {
     }
 
     if (msg.abandon) {
+      let detail = { title: 'You win', body: 'You win because your oppenent abandoned.' }
+      window.dispatchEvent(new CustomEvent("win", { detail: detail }))
+      this.#stopTimers()
+      return
+    }
 
+    if (msg.timeout) {
+      let detail = { title: 'You win', body: 'You win because of time.' }
+      window.dispatchEvent(new CustomEvent("win", { detail: detail }))
+      this.#stopTimers()
+      return
     }
 
     if (msg.gamestart) {
@@ -730,12 +746,18 @@ class Game {
     let { idx: idxSrc, piece: pieceSrc } = this.board.getPiece(msg.filesrc, msg.ranksrc)
     let { idx: idxDst, piece: pieceDst } = this.board.getPiece(msg.filedst, msg.rankdst)
 
-    // Illegal move
-    // if (pieceSrc && pieceSrc.color === this.playerColor) {
-    //   this.wsConn.send({ legalmove: false })
-    //   return
-    // }
-
     this.#moveReceive(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
+  }
+
+  abandonGame () {
+    if (this.gameStarted) {
+      this.sendWebSocketMessage({ abandon: true })
+      this.wsConn.close()
+
+      let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }
+      window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
+
+      this.#stopTimers()
+    }
   }
 }

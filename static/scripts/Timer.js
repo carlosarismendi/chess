@@ -7,7 +7,7 @@ class Timer {
     this.seconds = seconds
 
     this.currentTime = new Date()
-    this.currentTime.setHours(hours, minutes, seconds, 500)
+    this.currentTime.setHours(hours, 0, 5, 500)
 
     this.element.innerText = this.#timeStr(this.currentTime)
   }
