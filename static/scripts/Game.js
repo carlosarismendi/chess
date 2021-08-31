@@ -1,5 +1,5 @@
 class Game {
-  constructor({ selector, fen_string, host=null, connPath=null, duration=1 }) {
+  constructor({ selector, fen_string, host = null, connPath = null, duration = 10 }) {
     this.boardSelector = selector
     this.playerColor = COLORS.WHITE
     this.board = new Board({ selector: selector, colorDown: this.playerColor })
@@ -44,7 +44,7 @@ class Game {
     }
 
     const protocol = (window.location.protocol.includes("s")) ? "wss" : "ws"
-    this.wsConn = new WebSocket(`${protocol}://${host}/${connPath}`, )
+    this.wsConn = new WebSocket(`${protocol}://${host}/${connPath}`,)
     this.wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 
@@ -141,10 +141,15 @@ class Game {
     if (!pieceSrc || pieceDst && (pieceSrc.file === pieceDst.file && pieceSrc.rank === pieceDst.rank || pieceSrc.type === PIECES.EMPTY))
       return
 
-    this.#moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst)
+    this.#moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, true)
+
+    this.#updateTurn()
+
+    this.searchForCheck()
+    this.#calcLegalMovesForAllPieces()
   }
 
-  #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
+  #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, send = true) {
 
     // Check if movement is valid
     if (!pieceSrc.legalMoves.includes(idxDst)) {
@@ -157,7 +162,7 @@ class Game {
       legalmove: false, checkmate: false, abandon: false, creategame: false
     }
 
-    this.sendWebSocketMessage(payload)
+    if (send) this.sendWebSocketMessage(payload)
 
     this.board.removePiece(pieceDst)
 
@@ -173,11 +178,29 @@ class Game {
     else if (pieceSrc.rank === RANKS.RANK_1 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.BLACK) {
       this.#PawnPromotion(pieceSrc, idxDst)
     }
+    else if (pieceSrc.type === PIECES.KING) { // enroque
+      if (idxSrc - idxDst === 2) { // left
+        let idxRook = idxSrc - 4
+        let idxDst = idxRook + 3
 
-    this.#updateTurn()
+        let { idx1, piece: lrook } = this.board.getPieceByIdx(idxRook)
+        let { idx2, piece: pieceDst } = this.board.getPieceByIdx(idxDst)
 
-    this.searchForCheck()
-    this.#calcLegalMovesForAllPieces()
+        let { file, rank } = this.board.idxToFileAndRank(idxDst) // dst
+        this.#moveSend(idxRook, lrook, idxDst, file, rank, pieceDst, false)
+      }
+      else if (idxSrc - idxDst === -2) { // right
+        let idxRook = idxSrc + 3
+        let idxDst = idxRook - 2
+
+        let { idx1, piece: lrook } = this.board.getPieceByIdx(idxRook)
+        let { idx2, piece: pieceDst } = this.board.getPieceByIdx(idxDst)
+
+        let { file, rank } = this.board.idxToFileAndRank(idxDst) // dst
+        this.#moveSend(idxRook, lrook, idxDst, file, rank, pieceDst, false)
+      }
+    }
+
   }
 
   #moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
@@ -195,10 +218,32 @@ class Game {
     else if (pieceSrc.rank === RANKS.RANK_1 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.BLACK) {
       this.#PawnPromotion(pieceSrc, idxDst)
     }
+    else if (pieceSrc.type === PIECES.KING) { // enroque
+      if (idxSrc - idxDst === 2) { // left
+        let idxRook = idxSrc - 4
+        let idxDst = idxRook + 3
+
+        let { idx1, piece: lrook } = this.board.getPieceByIdx(idxRook)
+        let { idx2, piece: pieceDst } = this.board.getPieceByIdx(idxDst)
+
+        let { file, rank } = this.board.idxToFileAndRank(idxDst) // dst
+        this.#moveSend(idxRook, lrook, idxDst, file, rank, pieceDst, false)
+      }
+      else if (idxSrc - idxDst === -2) { // right
+        let idxRook = idxSrc + 3
+        let idxDst = idxRook - 2
+
+        let { idx1, piece: lrook } = this.board.getPieceByIdx(idxRook)
+        let { idx2, piece: pieceDst } = this.board.getPieceByIdx(idxDst)
+
+        let { file, rank } = this.board.idxToFileAndRank(idxDst) // dst
+        this.#moveSend(idxRook, lrook, idxDst, file, rank, pieceDst, false)
+      }
+    }
 
     this.#updateTurn()
 
-    this.#calcLegalMovesForAllPieces()
+    // this.#calcLegalMovesForAllPieces()
 
     this.searchForCheck()
     this.#calcLegalMovesForAllPieces()
@@ -211,7 +256,7 @@ class Game {
       whiteCanMove = piece.legalMoves.length > 0 || whiteCanMove
     })
 
-    let blackCanMove
+    let blackCanMove = false
     this.board.blackPieces.forEach(async piece => {
       this.#calcLegalMoves(piece)
       blackCanMove = piece.legalMoves.length > 0 || blackCanMove
@@ -535,21 +580,42 @@ class Game {
   }
 
 
-  #calcKingMoves(pieceSrc, offsets) {
-    let pieces = this.board.pieces
-    let pieceIdx = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
+  #calcKingMoves(king, offsets) {
+    let kingIdx = this.board.fileAndRankToIdx(king.file, king.rank)
 
     offsets.forEach(off => {
-      let move = off + pieceIdx
+      let move = off + kingIdx
       if (!this.board.isInBoard(move)) return
-      // if('move' in check) return
 
-      let pieceDst = pieces[move]
+      let pieceDst = this.board.pieces[move]
       let pieceDstColor = pieceDst & COLORS.WHITE
-      if (pieceDst === PIECES.EMPTY || pieceDstColor !== pieceSrc.color) {
-        pieceSrc.legalMoves.push(move)
+      if (pieceDst === PIECES.EMPTY || pieceDstColor !== king.color) {
+        king.legalMoves.push(move)
       }
     })
+
+    if (king.firstMove) {
+      let { idx: lRookIdx, piece: lRook } = this.board.getPieceByIdx(kingIdx - 4)
+      let { idx: rRookIdx, piece: rRook } = this.board.getPieceByIdx(kingIdx + 3)
+
+      if (lRook.firstMove && this.emptyRoute(kingIdx, lRookIdx, -1)) {
+        king.legalMoves.push(kingIdx - 2)
+      }
+      if (rRook.firstMove && this.emptyRoute(kingIdx, rRookIdx, 1)) {
+        king.legalMoves.push(kingIdx + 2)
+      }
+    }
+  }
+
+  emptyRoute(idxSrc, idxDst, off) {
+    let moveIdx = idxSrc + off
+    while (this.board.isInBoard(moveIdx) && moveIdx !== idxDst) {
+      if (this.board.pieces[moveIdx] !== PIECES.EMPTY) {
+        return false
+      }
+      moveIdx += off
+    }
+    return true
   }
 
   #calcKnightMoves(pieceSrc, offsets) {
