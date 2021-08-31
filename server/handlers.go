@@ -51,7 +51,7 @@ func generateInvitationLink(c echo.Context, token string) string {
 
 func CreateGame(c echo.Context) error {
 	websocket.Handler(func(ws *websocket.Conn) {
-		// defer ws.Close()
+		defer ws.Close()
 
 		// Returns invitation link to the user who created the game
 		token := generateToken()
