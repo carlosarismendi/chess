@@ -26,6 +26,7 @@ func removeGame(token string) {
 	if exits {
 		delete(games, token)
 	}
+	fmt.Printf("### Games: %v", games)
 	lock.Unlock()
 }
 
@@ -72,14 +73,15 @@ func CreateGame(c echo.Context) error {
 		// playGame(c, game, "Player 1")
 		for {
 			<-game.Turn
-			ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
+			checkmate := ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
 			game.Turn <- true
-			// game.Player1Plays = false
-			// _, stillValid := games[token]
-			// if !stillValid {
-			// 	break
-			// }
+
+			if checkmate {
+				break
+			}
 		}
+
+		removeGame(token)
 	}).ServeHTTP(c.Response(), c.Request())
 
 	return nil
@@ -113,11 +115,15 @@ func JoinGame(c echo.Context) error {
 		game.Turn <- true
 		for {
 			<-game.Turn
-			ReceiveAndSendSocketMessage(c, game.Player2.Conn, game.Player1.Conn)
+			checkmate := ReceiveAndSendSocketMessage(c, game.Player2.Conn, game.Player1.Conn)
 			game.Turn <- true
+
+			if checkmate {
+				break
+			}
 		}
 
-		// removeGame(token)
+		removeGame(token)
 	}).ServeHTTP(c.Response(), c.Request())
 
 	return nil

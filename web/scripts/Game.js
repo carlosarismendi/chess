@@ -33,6 +33,12 @@ class Game {
     this.wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 
+  sendWebSocketMessage(jsonMessage) {
+    const payload = JSON.stringify(jsonMessage)
+    console.log(payload)
+    this.wsConn.send(payload)
+  }
+
   restart() {
     this.board = new Board({ selector: this.boardSelector, colorDown: this.playerColor })
 
@@ -42,6 +48,8 @@ class Game {
     this.blackCastle = gameInfo.blackCastle
     this.isCheck = false
     this.cellsToProtect = []
+
+    this.#calcLegalMovesForAllPieces()
 
     this.#addEventListenersToPieces()
 
@@ -74,7 +82,7 @@ class Game {
     if (piece && piece.color !== this.playerColor)
       return
 
-    this.#calcLegalMoves(piece)
+    // this.#calcLegalMoves(piece)
     this.#showLegalMoves(piece)
   }
 
@@ -121,7 +129,7 @@ class Game {
 
     // Check if movement is valid
     if (!pieceSrc.legalMoves.includes(idxDst)) {
-      this.wsConn.send({ legalmove: false })
+      this.sendWebSocketMessage({ legalmove: true })
       return
     }
 
@@ -130,12 +138,8 @@ class Game {
       filesrc: pieceSrc.file, ranksrc: pieceSrc.rank, filedst: fileDst, rankdst: rankDst,
       legalmove: false, checkmate: false, abandon: false, creategame: false
     }
-    // console.log(JSON.stringify(payload))
-    const payload2 = JSON.stringify(payload)
-    console.log(payload2)
-    this.wsConn.send(payload2)
-    // console.log(payload.toJson())
-    // this.wsConn.send(payload.toJson())
+
+    this.sendWebSocketMessage(payload)
 
     this.board.removePiece(pieceDst)
 
@@ -156,6 +160,7 @@ class Game {
 
     console.log("******************************************")
     this.searchForCheck()
+    this.#calcLegalMovesForAllPieces()
   }
 
   #moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
@@ -176,8 +181,36 @@ class Game {
 
     this.#updateTurn()
 
+    this.#calcLegalMovesForAllPieces()
+
     console.log("******************************************")
     this.searchForCheck()
+    this.#calcLegalMovesForAllPieces()
+  }
+
+  async #calcLegalMovesForAllPieces() {
+    let whiteCanMove = false
+    this.board.whitePieces.forEach(async piece => {
+      this.#calcLegalMoves(piece)
+      whiteCanMove = piece.legalMoves.length > 0 || whiteCanMove
+      console.log("### white LENGHT: ", piece.legalMoves.length, ", bool: ", whiteCanMove)
+    })
+
+    let blackCanMove
+    this.board.blackPieces.forEach(async piece => {
+      this.#calcLegalMoves(piece)
+      blackCanMove = piece.legalMoves.length > 0 || blackCanMove
+      console.log("### black LENGHT: ", piece.legalMoves.length, ", bool: ", blackCanMove)
+    })
+
+    let checkmate = (this.colorToPlay === COLORS.BLACK && !blackCanMove)
+    checkmate = (this.colorToPlay === COLORS.WHITE && !whiteCanMove) || checkmate
+
+    if (checkmate) {
+      this.sendWebSocketMessage({ checkmate: true })
+    }
+
+    return checkmate
   }
 
   /*

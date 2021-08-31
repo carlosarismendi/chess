@@ -42,13 +42,13 @@ func SendError(c echo.Context, ws *websocket.Conn, errorCode int) error {
 	}
 	return nil
 }
-func ReceiveAndSendSocketMessage(c echo.Context, wsIn *websocket.Conn, wsOut *websocket.Conn) {
+func ReceiveAndSendSocketMessage(c echo.Context, wsIn *websocket.Conn, wsOut *websocket.Conn) bool {
 	msg := MessageWS{}
 	err := websocket.JSON.Receive(wsIn, &msg)
 	fmt.Printf("#### MSG IN: %v\n", msg)
 	if err != nil {
 		fmt.Println("xd")
-		return
+		return true
 		// c.Logger().Error(err)
 		// SendError(c, wsIn, http.StatusBadRequest)
 		// return msg, err
@@ -60,9 +60,8 @@ func ReceiveAndSendSocketMessage(c echo.Context, wsIn *websocket.Conn, wsOut *we
 		fmt.Println("xd")
 		//     c.Logger().Error(err)
 		//     SendError(c, ws, http.StatusInternalServerError)
-		return
+		return true
 	}
 
-	// return
-	// return msg, nil
+	return msg.CheckMate
 }
