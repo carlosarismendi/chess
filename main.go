@@ -7,7 +7,6 @@ import (
 )
 
 var (
-	host = "localhost"
 	port = 8080
 )
 
@@ -21,5 +20,5 @@ func main() {
 	e.GET("/new-game", CreateGame)
 	e.GET("/join-game/:token", JoinGame)
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", host, port)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
 }
