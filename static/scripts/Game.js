@@ -29,7 +29,7 @@ class Game {
       this.wsConn.close()
     }
 
-    this.wsConn = new WebSocket(`ws://${host}/${connPath}`, )
+    this.wsConn = new WebSocket(`wss://${host}/${connPath}`, )
     this.wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 
