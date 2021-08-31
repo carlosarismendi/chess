@@ -26,11 +26,12 @@ function newGame () {
   game.createWebSocketConnection(host, 'new-game')
 }
 
-function copyInivitationLink(event) {
+function copyInivitationLink() {
   if (!game.gameUrl) return
 
   navigator.clipboard.writeText(game.gameUrl)
-  alert(`Inivitation link copied to clipboard:\n${game.gameUrl}`)
+  let evt = { detail: { title: 'Share link', body: `The share link has been copies to your clipboard.` }}
+  showModal(evt)
 }
 
 function showModal(event) {
