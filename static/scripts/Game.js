@@ -36,7 +36,6 @@ class Game {
 
   sendWebSocketMessage(jsonMessage) {
     const payload = JSON.stringify(jsonMessage)
-    console.log(payload)
     this.wsConn.send(payload)
   }
 
@@ -130,7 +129,6 @@ class Game {
 
     // Check if movement is valid
     if (!pieceSrc.legalMoves.includes(idxDst)) {
-      this.sendWebSocketMessage({ legalmove: true })
       return
     }
 
@@ -159,7 +157,6 @@ class Game {
 
     this.#updateTurn()
 
-    console.log("******************************************")
     this.searchForCheck()
     this.#calcLegalMovesForAllPieces()
   }
@@ -184,7 +181,6 @@ class Game {
 
     this.#calcLegalMovesForAllPieces()
 
-    console.log("******************************************")
     this.searchForCheck()
     this.#calcLegalMovesForAllPieces()
   }
@@ -194,14 +190,12 @@ class Game {
     this.board.whitePieces.forEach(async piece => {
       this.#calcLegalMoves(piece)
       whiteCanMove = piece.legalMoves.length > 0 || whiteCanMove
-      console.log("### white LENGHT: ", piece.legalMoves.length, ", bool: ", whiteCanMove)
     })
 
     let blackCanMove
     this.board.blackPieces.forEach(async piece => {
       this.#calcLegalMoves(piece)
       blackCanMove = piece.legalMoves.length > 0 || blackCanMove
-      console.log("### black LENGHT: ", piece.legalMoves.length, ", bool: ", blackCanMove)
     })
 
     let checkmate = (this.colorToPlay === COLORS.BLACK && !blackCanMove)
@@ -227,8 +221,6 @@ class Game {
       this.isCheck = true
       this.cellsToProtect = []
 
-      console.log("King at " + kingIdx + " | Bullies at " + bullies)
-
       if (bullies.length > 1) { // cant be bloqued
         this.cellsToProtect = []
       }
@@ -237,7 +229,6 @@ class Game {
         let bullyTypeColor = this.board.pieces[bullyIdx] // type | color
         let bullyColor = bullyTypeColor & COLORS.WHITE
         let bullyType = bullyTypeColor - bullyColor
-        console.log("Bully type " + bullyTypeColor + " " + int2string(bullyTypeColor))
 
         if (bullyType === PIECES.KNIGHT) { // cant block knight, only kill him
           this.cellsToProtect = this.cellsToProtect.concat(bullyIdx)
@@ -338,7 +329,6 @@ class Game {
       else {
         pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => this.cellsToProtect.includes(idx)) //cells to block check or kill bully
       }
-      console.log("IsCheck -> moves = " + pieceSrc.legalMoves)
     }
     else if (pieceSrc.type == PIECES.KING) {
       pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => this.#bullyPiecesIdx(idx, enemyColor).length == 0) //safe places
@@ -348,12 +338,10 @@ class Game {
       let idxSrc = this.board.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
       let king = this.board.getKing(pieceSrc.color)
       let idxKing = this.board.fileAndRankToIdx(king.file, king.rank)
-      console.log("King at " + idxKing + " | piece to move: " + idxSrc)
 
       if (this.board.sameDiagonal(idxSrc, idxKing) || this.board.sameRowOrCol(idxSrc, idxKing)) {
 
         let off = this.getOffset(idxKing, idxSrc)
-        console.log(off)
 
         // go from king to srcPiece, looking for a piece blocking the path
         let pathBlocked = false  // if a piece is blocking the path, srcPiece doesnt have to worry about king
@@ -364,7 +352,6 @@ class Game {
           let cell = this.board.pieces[move]
           if (cell !== PIECES.EMPTY) { // found piece
             pathBlocked = true
-            console.log("blocked at " + move + " " + (typeof move))
             break
           }
         }
@@ -380,7 +367,6 @@ class Game {
             if (cell !== PIECES.EMPTY && pieceDstColor !== pieceSrc.color // found piece of enemy color
               && pieceType !== PIECES.PAWN && pieceType !== PIECES.KNIGHT && pieceType !== PIECES.KING) { // not pawn or knight or king
 
-              console.log("Encontre enemigo " + move)
               let path = this.board.getMovesFromTo(idxKing, move, [off])
               pieceSrc.legalMoves = pieceSrc.legalMoves.filter(idx => path.includes(idx))
               break;
@@ -389,8 +375,6 @@ class Game {
         }
       }
     }
-
-    console.log("NoCheck -> moves = " + pieceSrc.legalMoves)
   }
 
   getOffset(src, dst) {
@@ -521,8 +505,6 @@ class Game {
       checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.PAWN, PIECE_OFFSETS.WHITE_PAWN_ATACK))
     } else {
       checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.PAWN, PIECE_OFFSETS.BLACK_PAWN_ATACK))
-      console.log("from " + idxCell)
-      console.log("checks pawn: " + checks)
     }
     checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.KNIGHT, PIECE_OFFSETS.KNIGHT))
     checks = checks.concat(this.#checksWithOneMove(idxCell, colorToAtack, PIECES.KING, PIECE_OFFSETS.KING))
@@ -613,7 +595,6 @@ class Game {
     console.log(msg)
 
     if (msg.errorcode) {
-      console.error(msg)
       return
     }
 
