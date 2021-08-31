@@ -70,6 +70,9 @@ class Game {
 
     let { idx, piece } = this.board.getPiece(fileSrc, rankSrc)
 
+    if (piece && piece.color !== this.playerColor)
+      return
+
     this.#calcLegalMoves(piece)
     this.#showLegalMoves(piece)
   }
@@ -101,16 +104,19 @@ class Game {
     let { idx: idxSrc, piece: pieceSrc } = this.board.getPiece(fileSrc, rankSrc)
     let { idx: idxDst, piece: pieceDst } = this.board.getPiece(fileDst, rankDst)
 
+    if (pieceSrc && pieceSrc.color !== this.playerColor)
+      return
+
     this.#hideLegalMoves(pieceSrc)
 
     // Check that user is not dropping in the same cell or trying to drag an empty cell
     if (!pieceSrc || pieceDst && (pieceSrc.file === pieceDst.file && pieceSrc.rank === pieceDst.rank || pieceSrc.type === PIECES.EMPTY))
       return
 
-    this.#move(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst)
+    this.#moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst)
   }
 
-  #move(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
+  #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
 
     // Check if movement is valid
     if (!pieceSrc.legalMoves.includes(idxDst)) {
@@ -130,6 +136,28 @@ class Game {
     // console.log(payload.toJson())
     // this.wsConn.send(payload.toJson())
 
+    this.board.removePiece(pieceDst)
+
+    pieceSrc.firstMove = false
+    pieceSrc.setCell(fileDst, rankDst)
+    this.board.pieces[idxSrc] = PIECES.EMPTY
+    this.board.pieces[idxDst] = pieceSrc.type | pieceSrc.color
+
+    // Check if piece is a pawn that has reached promotion ranks
+    if (pieceSrc.rank === RANKS.RANK_8 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.WHITE) {
+      this.#PawnPromotion(pieceSrc, idxDst)
+    }
+    else if (pieceSrc.rank === RANKS.RANK_1 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.BLACK) {
+      this.#PawnPromotion(pieceSrc, idxDst)
+    }
+
+    this.#updateTurn()
+
+    console.log("******************************************")
+    this.searchForCheck()
+  }
+
+  #moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
     this.board.removePiece(pieceDst)
 
     pieceSrc.firstMove = false
@@ -573,11 +601,11 @@ class Game {
     let { idx: idxDst, piece: pieceDst } = this.board.getPiece(msg.filedst, msg.rankdst)
 
     // Illegal move
-    if (pieceSrc && pieceSrc.color === this.playerColor) {
-      this.wsConn.send({ legalmove: false })
-      return
-    }
+    // if (pieceSrc && pieceSrc.color === this.playerColor) {
+    //   this.wsConn.send({ legalmove: false })
+    //   return
+    // }
 
-    this.#move(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
+    this.#moveReceive(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
   }
 }
