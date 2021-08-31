@@ -8,6 +8,7 @@ class Game {
     let gameInfo = this.board.initFromFENNotation(fen_string)
     this.colorToPlay = gameInfo.colorToPlay
     this.isCheck = false
+    this.pawnJump = -99
     this.cellsToProtect = []
     this.whiteCastle = gameInfo.whiteCastle
     this.blackCastle = gameInfo.blackCastle
@@ -171,7 +172,19 @@ class Game {
 
     if (send) this.sendWebSocketMessage(payload)
 
-    this.board.removePiece(pieceDst)
+    let lastRank = pieceSrc.rank
+    let lastFile = pieceSrc.file
+
+    //pawn have moved in diagonal without kill
+    if (pieceSrc.type === PIECES.PAWN && pieceDst == null && fileDst !== lastFile) {
+      // console.log("dst: " + pieceDst)
+      let { idx, piece } = this.board.getPiece(fileDst, lastRank)
+      console.log("piece: " + pieceDst)
+      this.board.removePiece(piece)
+    }
+    else {
+      this.board.removePiece(pieceDst)
+    }
 
     pieceSrc.firstMove = false
     pieceSrc.setCell(fileDst, rankDst)
@@ -211,9 +224,21 @@ class Game {
   }
 
   #moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
-    this.#showLastMove(idxSrc, idxDst)
+    let lastRank = pieceSrc.rank
+    let lastFile = pieceSrc.file
 
-    this.board.removePiece(pieceDst)
+    //pawn have moved in diagonal without kill
+    if (pieceSrc.type === PIECES.PAWN && pieceDst == null && fileDst !== lastFile) {
+      // console.log("dst: " + pieceDst)
+      let { idx, piece } = this.board.getPiece(fileDst, lastRank)
+      console.log("piece: " + pieceDst)
+      this.board.removePiece(piece)
+    }
+    else {
+      this.board.removePiece(pieceDst)
+    }
+    this.pawnJump = -99
+    this.#showLastMove(idxSrc, idxDst)
 
     pieceSrc.firstMove = false
     pieceSrc.setCell(fileDst, rankDst)
@@ -221,11 +246,23 @@ class Game {
     this.board.pieces[idxDst] = pieceSrc.type | pieceSrc.color
 
     // Check if piece is a pawn that has reached promotion ranks
-    if (pieceSrc.rank === RANKS.RANK_8 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.WHITE) {
-      this.#PawnPromotion(pieceSrc, idxDst)
-    }
-    else if (pieceSrc.rank === RANKS.RANK_1 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.BLACK) {
-      this.#PawnPromotion(pieceSrc, idxDst)
+    if (pieceSrc.type === PIECES.PAWN) {
+      if (pieceSrc.color === COLORS.WHITE) {
+        if (pieceSrc.rank === RANKS.RANK_8) { // Last row
+          this.#PawnPromotion(pieceSrc, idxDst)
+        }
+      }
+      else {
+        if (pieceSrc.rank === RANKS.RANK_1) { // Last row
+          this.#PawnPromotion(pieceSrc, idxDst)
+        }
+      }
+      // console.log("pawn move: " + (rankDst - lastRank))
+      // check if the player jumped with the pawn
+      if (abs(rankDst - lastRank) === 2) {
+        this.pawnJump = lastFile
+        console.log("LOng pawn: " + fileDst)
+      }
     }
     else if (pieceSrc.type === PIECES.KING) { // enroque
       if (idxSrc - idxDst === 2) { // left
@@ -251,9 +288,6 @@ class Game {
     }
 
     this.#updateTurn()
-
-    // this.#calcLegalMovesForAllPieces()
-
     this.searchForCheck()
     this.#calcLegalMovesForAllPieces()
   }
@@ -498,11 +532,31 @@ class Game {
         pieceSrc.legalMoves.push(move)
       }
     })
-    /*
-    - rank 4 white, 3 black
-    - pawn left or right
-    - last move was double jump
-    */
+
+    // Kill long jump Pawn
+    if (this.pawnJump) {
+      if (pieceSrc.color === COLORS.WHITE) {
+        if (pieceSrc.rank === RANKS.RANK_5) {
+          if (pieceSrc.file - 1 === this.pawnJump) {
+            pieceSrc.legalMoves.push(this.board.fileAndRankToIdx(pieceSrc.file-1, pieceSrc.rank+1))
+          }
+          else if (pieceSrc.file + 1 === this.pawnJump) {
+            pieceSrc.legalMoves.push(this.board.fileAndRankToIdx(pieceSrc.file+1, pieceSrc.rank+1))
+          }
+        }
+      }
+      else { // BLACK
+        if (pieceSrc.rank === RANKS.RANK_4) {
+          if (pieceSrc.file - 1 === this.pawnJump) {
+            pieceSrc.legalMoves.push(this.board.fileAndRankToIdx(pieceSrc.file-1, pieceSrc.rank-1))
+          }
+          else if (pieceSrc.file + 1 === this.pawnJump) {
+            pieceSrc.legalMoves.push(this.board.fileAndRankToIdx(pieceSrc.file+1, pieceSrc.rank-1))
+          }
+        }
+      }
+    }
+
   }
 
   #calcLongRangePieceMoves(pieceSrc, offsets) {
