@@ -46,7 +46,6 @@ func generateToken() string {
 
 func generateInvitationLink(c echo.Context, token string) string {
 	host := c.Request().Host
-	// fmt.Println(host)
 	return fmt.Sprintf("%s/?token=%s", host, token)
 }
 
@@ -68,10 +67,7 @@ func CreateGame(c echo.Context) error {
 		addGame(token, game)
 
 		fmt.Printf("### Creating game: %v\n", *game)
-		// for {
-		// 	ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
-		// }
-		// playGame(c, game, "Player 1")
+
 		for {
 			<-game.Turn
 			checkmate := ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)

@@ -2,16 +2,21 @@ let game = null
 const host = window.location.host
 
 window.onload = init
+window.onclick = (event) => {
+  let modal = document.getElementById('modal')
+  if (event.target == modal)
+  {
+    modalElem.style.display = 'none'
+  }
+}
 
 function init () {
+  window.addEventListener("win", showModal)
+  window.addEventListener("lose", showModal)
+
   game = new Game({ selector: '#board', fen_string: INITIAL_POSITION_FEN, wsConn: null })
 
-  // fen_string = "3r2kb/4q2p/p3p1pQ/1p4N1/2n2RP1/4P2P/KP1r4/3N1R2 w -- - 0 1"
-  // fen_string = "7K/1k2N2p/8/4r3/4R3/5Q2/8/8 w -- - 0 1"
-  // game = new Game({ selector: '#board', fen_string: fen_string })
-
   let gameToken = new URLSearchParams(window.location.search).get('token')
-  console.log(gameToken)
   if (gameToken) {
     game.createWebSocketConnection(host, `join-game/${gameToken}`)
   }
@@ -19,12 +24,28 @@ function init () {
 
 function newGame () {
   game.createWebSocketConnection(host, 'new-game')
-  // game.restart()
 }
 
-function copyInivitationLink(event) {
+function copyInivitationLink() {
   if (!game.gameUrl) return
 
   navigator.clipboard.writeText(game.gameUrl)
-  alert(`Inivitation link copied to clipboard:\n${game.gameUrl}`)
+  let evt = { detail: { title: 'Share link', body: `The share link has been copies to your clipboard.` }}
+  showModal(evt)
+}
+
+function showModal(event) {
+  let modal = document.getElementById('modal')
+  let modalTitle = document.getElementById('modal-title')
+  let modalBody = document.getElementById('modal-body')
+
+  modalTitle.innerText = event.detail.title
+  modalBody.innerText = event.detail.body
+
+  modal.style.display = 'block'
+}
+
+function hideModal(event) {
+  let modalElem = document.getElementById('modal')
+  modalElem.style.display = 'none'
 }
