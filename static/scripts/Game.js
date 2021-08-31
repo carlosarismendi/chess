@@ -32,6 +32,10 @@ class Game {
       }
       this.wsConn.close()
     }).bind(this))
+
+    this.lastMoveSrc = null
+    this.lastMoveDst = null
+    this.gameStarted = false
   }
 
   createWebSocketConnection(host, connPath) {
@@ -77,6 +81,7 @@ class Game {
     }
 
     this.whiteTimer.start()
+    this.gameStarted = true
   }
 
   #addEventListenersToPieces() {
@@ -157,6 +162,8 @@ class Game {
       return
     }
 
+    this.#showLastMove(idxSrc, idxDst)
+
     // let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDs: fileDst, rankDst: rankDst })
     let payload = {
       filesrc: pieceSrc.file, ranksrc: pieceSrc.rank, filedst: fileDst, rankdst: rankDst,
@@ -231,6 +238,7 @@ class Game {
       this.board.removePiece(pieceDst)
     }
     this.pawnJump = -99
+    this.#showLastMove(idxSrc, idxDst)
 
     pieceSrc.firstMove = false
     pieceSrc.setCell(fileDst, rankDst)
@@ -712,6 +720,23 @@ class Game {
     });
   }
 
+  async #showLastMove(idxSrc, idxDst) {
+    this.#hideLastMove()
+
+    this.lastMoveSrc = this.board.getElementByIdx(idxSrc)
+    this.lastMoveDst = this.board.getElementByIdx(idxDst)
+
+    this.lastMoveSrc.classList.add('last-move')
+    this.lastMoveDst.classList.add('last-move')
+  }
+
+  async #hideLastMove() {
+    if(this.lastMoveSrc && this.lastMoveDst) {
+      this.lastMoveSrc.classList.remove('last-move')
+      this.lastMoveDst.classList.remove('last-move')
+    }
+  }
+
   #PawnPromotion(piece, idx) {
     piece.setType(PIECES.QUEEN)
     this.board.pieces[idx] = PIECES.QUEEN | piece.color
@@ -735,11 +760,15 @@ class Game {
     }
   }
 
+  #stopTimers() {
+    this.whiteTimer.pause()
+      this.blackTimer.pause()
+  }
+
   #onwsmessage(event) {
     let msg = JSON.parse(event.data)
-    console.log(msg)
 
-    if (msg.errorcode) {
+    if (msg.errorcode || (typeof msg) == 'number') {
       return
     }
 
@@ -749,7 +778,17 @@ class Game {
     }
 
     if (msg.abandon) {
+      let detail = { title: 'You win', body: 'You win because your oppenent abandoned.' }
+      window.dispatchEvent(new CustomEvent("win", { detail: detail }))
+      this.#stopTimers()
+      return
+    }
 
+    if (msg.timeout) {
+      let detail = { title: 'You win', body: 'You win because of time.' }
+      window.dispatchEvent(new CustomEvent("win", { detail: detail }))
+      this.#stopTimers()
+      return
     }
 
     if (msg.gamestart) {
@@ -761,12 +800,18 @@ class Game {
     let { idx: idxSrc, piece: pieceSrc } = this.board.getPiece(msg.filesrc, msg.ranksrc)
     let { idx: idxDst, piece: pieceDst } = this.board.getPiece(msg.filedst, msg.rankdst)
 
-    // Illegal move
-    // if (pieceSrc && pieceSrc.color === this.playerColor) {
-    //   this.wsConn.send({ legalmove: false })
-    //   return
-    // }
-
     this.#moveReceive(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
+  }
+
+  abandonGame () {
+    if (this.gameStarted) {
+      this.sendWebSocketMessage({ abandon: true })
+      this.wsConn.close()
+
+      let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }
+      window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
+
+      this.#stopTimers()
+    }
   }
 }
