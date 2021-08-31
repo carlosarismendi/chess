@@ -1,5 +1,5 @@
 let game = null
-const host = "localhost:8080"
+const host = window.location.host
 
 window.onload = init
 
