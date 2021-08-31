@@ -12,6 +12,7 @@ class Timer {
   }
 
   start () {
+    this.element.classList.remove('timer-stop')
     this.timer = setInterval(async () => {
       this.currentTime.setMilliseconds(this.currentTime.getMilliseconds() - 10)
       this.element.innerText = this.currentTime.toLocaleTimeString()

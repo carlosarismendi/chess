@@ -1,5 +1,5 @@
 class Game {
-  constructor({ selector, fen_string, host=null, connPath=null }) {
+  constructor({ selector, fen_string, host=null, connPath=null, duration=10 }) {
     this.boardSelector = selector
     this.playerColor = COLORS.WHITE
     this.board = new Board({ selector: selector, colorDown: this.playerColor })
@@ -14,9 +14,9 @@ class Game {
 
     this.#addEventListenersToPieces()
 
-    this.whiteTimer = new Timer({ selector: 'white-timer', minutes: 10 })
-    this.whiteTimer.start()
-    this.blackTimer = new Timer({ selector: 'black-timer', minutes: 10 })
+    this.whiteTimer = new Timer({ selector: 'up-timer', minutes: duration })
+    this.blackTimer = new Timer({ selector: 'down-timer', minutes: duration })
+    this.duration = duration
   }
 
   createWebSocketConnection(host, connPath) {
@@ -53,8 +53,13 @@ class Game {
 
     this.#addEventListenersToPieces()
 
-    this.whiteTimer.reset()
-    this.blackTimer.reset()
+    if (this.playerColor === COLORS.WHITE) {
+      this.whiteTimer = new Timer({ selector: 'down-timer', minutes: this.duration })
+      this.blackTimer = new Timer({ selector: 'up-timer', minutes: this.duration })
+    } else {
+      this.whiteTimer = new Timer({ selector: 'up-timer', minutes: this.duration })
+      this.blackTimer = new Timer({ selector: 'down-timer', minutes: this.duration })
+    }
 
     this.whiteTimer.start()
   }
