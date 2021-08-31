@@ -2,15 +2,20 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/labstack/echo/v4"
 )
 
 var (
-	port = 8080
+	port = os.Getenv("PORT")
 )
 
 func main() {
+	if len(port) <= 0 {
+		port = "8080"
+	}
+
 	e := echo.New()
 	e.Static("/", "static")
 
@@ -20,5 +25,5 @@ func main() {
 	e.GET("/new-game", CreateGame)
 	e.GET("/join-game/:token", JoinGame)
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", port)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", port)))
 }
