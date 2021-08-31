@@ -26,7 +26,7 @@ func removeGame(token string) {
 	if exits {
 		delete(games, token)
 	}
-	fmt.Printf("### Games: %v", games)
+	fmt.Printf("### Games: %v\n", games)
 	lock.Unlock()
 }
 
@@ -50,11 +50,12 @@ func generateInvitationLink(c echo.Context, token string) string {
 }
 
 func CreateGame(c echo.Context) error {
+	var token string
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
 
 		// Returns invitation link to the user who created the game
-		token := generateToken()
+		token = generateToken()
 		url := generateInvitationLink(c, token)
 		data := make(map[string]string)
 		data["url"] = url
@@ -69,31 +70,36 @@ func CreateGame(c echo.Context) error {
 		fmt.Printf("### Creating game: %v\n", *game)
 
 		for {
-			<-game.Turn
-			endGame := ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
-			game.Turn <- true
+			select {
+			case <-game.Turn:
+				endGame := ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
+				game.Turn <- true
 
-			if endGame {
+				if endGame {
+					break
+				}
 				break
+			case <-time.After(5 * 60 * time.Second): // 5 minutes
+				return
 			}
 		}
-
-		removeGame(token)
 	}).ServeHTTP(c.Response(), c.Request())
 
+	removeGame(token)
 	return nil
 }
 
 func JoinGame(c echo.Context) error {
+	var token string
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
 
 		// User joins a game by invitation link
-		token := c.Param("token")
+		token = c.Param("token")
 		game, exits := getGame(token)
 		if !exits {
 			SendSocketMessage(c, ws, http.StatusNotFound)
-			c.Logger().Error(fmt.Sprintf("Game with token %s does not exists.", token))
+			c.Logger().Error(fmt.Sprintf("Game with token %s does not exists.\n", token))
 			return
 		}
 
@@ -102,7 +108,7 @@ func JoinGame(c echo.Context) error {
 		// Send to both players signal to start playing
 		errP1, errP2 := game.Start(c)
 		if errP1 != nil || errP2 != nil {
-			c.Logger().Error(fmt.Sprintf("errP1: %v && errP2: %v", errP1, errP2))
+			c.Logger().Error(fmt.Sprintf("errP1: %v && errP2: %v\n", errP1, errP2))
 			SendError(c, game.Player1.Conn, http.StatusInternalServerError)
 			SendError(c, game.Player2.Conn, http.StatusInternalServerError)
 			return
@@ -119,9 +125,8 @@ func JoinGame(c echo.Context) error {
 				break
 			}
 		}
-
-		removeGame(token)
 	}).ServeHTTP(c.Response(), c.Request())
 
+	removeGame(token)
 	return nil
 }
