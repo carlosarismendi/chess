@@ -181,7 +181,14 @@ class Game {
     this.#updateTurn()
 
     this.#searchForCheck()
-    this.#calcLegalMovesForAllPieces()
+    const checkmate = this.#calcLegalMovesForAllPieces()
+
+    if (checkmate) {
+      let detail = { title: 'You win', body: 'You win because of chekmate.' }
+      window.dispatchEvent(new CustomEvent("win", { detail: detail }))
+      this.#sendWebSocketMessage(new MessageWS({ checkMate: true }))
+      this.#endGame()
+    }
   }
 
   #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, send = true) {
@@ -315,7 +322,7 @@ class Game {
   }
 
   // Calculates legal moves for all pieces and send a message if its checkmate
-  async #calcLegalMovesForAllPieces() {
+  #calcLegalMovesForAllPieces() {
     let whiteCanMove = false
     this.#board.whitePieces.forEach(async piece => {
       this.#board.calcLegalMoves(piece, this.#colorToPlay, this.#isCheck, this.#cellsToProtect, this.#pawnJump)
@@ -328,13 +335,7 @@ class Game {
       blackCanMove = piece.legalMoves.length > 0 || blackCanMove
     })
 
-    let checkmate = (this.#colorToPlay === COLORS.BLACK && !blackCanMove)
-    checkmate = (this.#colorToPlay === COLORS.WHITE && !whiteCanMove) || checkmate
-
-    if (checkmate) {
-      this.#sendWebSocketMessage(new MessageWS({ checkMate: true }))
-    }
-
+    const checkmate = !blackCanMove && !whiteCanMove
     return checkmate
   }
 
@@ -411,8 +412,8 @@ class Game {
     }
 
     if (msg.checkmate) {
+      console.log("CHECKMATE")
       let detail = { title: 'You lose', body: 'You lose because of chekmate.' }
-      console.log(detail)
       window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
       this.#endGame()
       return
@@ -444,7 +445,7 @@ class Game {
     this.#moveReceive(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
   }
 
-  #abandonGame() {
+  abandonGame() {
     if (this.#gameStarted) {
       this.#sendWebSocketMessage(new MessageWS({ abandon: true }))
 

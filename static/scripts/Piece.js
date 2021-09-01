@@ -1,4 +1,13 @@
 class Piece {
+  type = null
+  color = null
+  firstMove = null
+  legalMoves = null
+  cssClass = null
+  file = null
+  rank = null
+  element = null
+
   constructor ({ type, file, rank, color, idx }) {
     this.type = type
     this.color = color
