@@ -41,7 +41,7 @@ class Game {
     window.addEventListener('timeout', ((event) => {
       let colorTimer = event.detail.colorTimer
       if (colorTimer === this.#playerColor) {
-        this.sendWebSocketMessage(new MessageWS({ timeOut: true }))
+        this.#sendWebSocketMessage(new MessageWS({ timeOut: true }))
 
         let detail = { title: 'You lose', body: 'You lose because of time.' }
         window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
@@ -67,7 +67,7 @@ class Game {
     }
 
     if (this.#wsConn) {
-      this.sendWebSocketMessage(new MessageWS({ abandon: true }))
+      this.#sendWebSocketMessage(new MessageWS({ abandon: true }))
       this.#wsConn.close()
     }
 
@@ -76,13 +76,13 @@ class Game {
     this.#wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 
-  sendWebSocketMessage(message) {
+  #sendWebSocketMessage(message) {
     const payload = message.toJSON()
     console.log(payload)
     this.#wsConn.send(payload)
   }
 
-  restart() {
+  #restart() {
     this.#board = new Board({ selector: this.#boardSelector, colorDown: this.#playerColor })
 
     let gameInfo = this.#board.initFromFENNotation(INITIAL_POSITION_FEN)
@@ -92,7 +92,7 @@ class Game {
     this.#isCheck = false
     this.#cellsToProtect = []
 
-    this.calcLegalMovesForAllPieces()
+    this.#calcLegalMovesForAllPieces()
 
     this.#addEventListenersToPieces()
 
@@ -180,8 +180,8 @@ class Game {
 
     this.#updateTurn()
 
-    this.searchForCheck()
-    this.calcLegalMovesForAllPieces()
+    this.#searchForCheck()
+    this.#calcLegalMovesForAllPieces()
   }
 
   #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, send = true) {
@@ -189,7 +189,7 @@ class Game {
 
     let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDst: fileDst, rankDst: rankDst })
     console.log("moveSend: ", payload)
-    if (send) this.sendWebSocketMessage(payload)
+    if (send) this.#sendWebSocketMessage(payload)
 
     let lastRank = pieceSrc.rank
     let lastFile = pieceSrc.file
@@ -308,14 +308,14 @@ class Game {
     }
 
     this.#updateTurn()
-    this.searchForCheck()
-    this.calcLegalMovesForAllPieces()
+    this.#searchForCheck()
+    this.#calcLegalMovesForAllPieces()
 
     this.#moveAudio.play()
   }
 
   // Calculates legal moves for all pieces and send a message if its checkmate
-  async calcLegalMovesForAllPieces() {
+  async #calcLegalMovesForAllPieces() {
     let whiteCanMove = false
     this.#board.whitePieces.forEach(async piece => {
       this.#board.calcLegalMoves(piece, this.#colorToPlay, this.#isCheck, this.#cellsToProtect, this.#pawnJump)
@@ -332,7 +332,7 @@ class Game {
     checkmate = (this.#colorToPlay === COLORS.WHITE && !whiteCanMove) || checkmate
 
     if (checkmate) {
-      this.sendWebSocketMessage(new MessageWS({ checkMate: true }))
+      this.#sendWebSocketMessage(new MessageWS({ checkMate: true }))
     }
 
     return checkmate
@@ -341,7 +341,7 @@ class Game {
   /*
     Sets variables isCheck and cellsToProtect
   */
-  searchForCheck() {
+  #searchForCheck() {
     let king = this.#board.getKing(this.#colorToPlay)
     let kingIdx = this.#board.fileAndRankToIdx(king.file, king.rank)
     let enemyColor = this.#colorToPlay ^ COLORS.WHITE
@@ -434,7 +434,7 @@ class Game {
 
     if (msg.gamestart) {
       this.#playerColor = (msg.color == "White") ? COLORS.WHITE : COLORS.BLACK
-      this.restart()
+      this.#restart()
       return
     }
 
@@ -444,9 +444,9 @@ class Game {
     this.#moveReceive(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
   }
 
-  abandonGame() {
+  #abandonGame() {
     if (this.#gameStarted) {
-      this.sendWebSocketMessage(new MessageWS({ abandon: true }))
+      this.#sendWebSocketMessage(new MessageWS({ abandon: true }))
 
       let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }
       window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
