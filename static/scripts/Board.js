@@ -588,10 +588,10 @@ class Board {
       let { idx: lRookIdx, piece: lRook } = this.getPieceByIdx(kingIdx - 4)
       let { idx: rRookIdx, piece: rRook } = this.getPieceByIdx(kingIdx + 3)
 
-      if (lRook.firstMove && this.emptyRoute(kingIdx, lRookIdx, -1)) {
+      if (lRook && lRook.firstMove && this.emptyRoute(kingIdx, lRookIdx, -1)) {
         king.legalMoves.push(kingIdx - 2)
       }
-      if (rRook.firstMove && this.emptyRoute(kingIdx, rRookIdx, 1)) {
+      if (rRook && rRook.firstMove && this.emptyRoute(kingIdx, rRookIdx, 1)) {
         king.legalMoves.push(kingIdx + 2)
       }
     }

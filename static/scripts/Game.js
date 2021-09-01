@@ -148,6 +148,11 @@ class Game {
     if (!pieceSrc || pieceDst && (pieceSrc.file === pieceDst.file && pieceSrc.rank === pieceDst.rank || pieceSrc.type === PIECES.EMPTY))
       return
 
+    // Check if movement is valid
+    if (!pieceSrc.legalMoves.includes(idxDst)) {
+      return
+    }
+
     this.#moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, true)
 
     this.#updateTurn()
@@ -157,12 +162,6 @@ class Game {
   }
 
   #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, send = true) {
-
-    // Check if movement is valid
-    if (!pieceSrc.legalMoves.includes(idxDst)) {
-      return
-    }
-
     this.#showLastMove(idxSrc, idxDst)
 
     let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDst: fileDst, rankDst: rankDst })
