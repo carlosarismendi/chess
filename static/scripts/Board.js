@@ -1,6 +1,11 @@
 class Board {
+  #element = null
+  whitePieces = null
+  blackPieces = null
+  pieces = null
+
   constructor({ selector, colorDown }) {
-    this.element = document.querySelector(selector)
+    this.#element = document.querySelector(selector)
     this.#drawBoard(colorDown)
     this.whitePieces = []
     this.blackPieces = []
@@ -13,22 +18,6 @@ class Board {
   getPiece(file, rank) {
     let idx = this.fileAndRankToIdx(file, rank)
     return this.getPieceByIdx(idx)
-    // let piece = null
-    // let pieceType = this.pieces[idx]
-    // if(pieceType === PIECES.EMPTY) return { idx: idx, piece: piece }
-    // let pieceColor = pieceType & COLORS.WHITE
-
-    // let piecesArray = (pieceColor === COLORS.WHITE) ? this.whitePieces : this.blackPieces
-
-    // for (let i = 0; i < piecesArray.length; ++i) {
-
-    //   if (piecesArray[i].file === file && piecesArray[i].rank === rank) {
-    //     piece = piecesArray[i]
-    //     break
-    //   }
-    // }
-
-    // return { idx: idx, piece: piece }
   }
 
   getPieceByIdx(idx) {
@@ -59,7 +48,6 @@ class Board {
         return this.whitePieces[i]
       }
     }
-    console.error("King doesnt exists???????????")
   }
 
   blackKing() {
@@ -69,7 +57,6 @@ class Board {
         return this.blackPieces[i]
       }
     }
-    console.error("King doesnt exists???????????")
   }
 
   getKing(colour) {
@@ -80,31 +67,25 @@ class Board {
   }
 
   #drawBoard(colorDown) {
-    this.element.innerHTML = ''
+    this.#element.innerHTML = ''
 
     if (colorDown === COLORS.WHITE) {
       for (let rank = RANKS.RANK_8; rank >= RANKS.RANK_1; --rank) {
         for (let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
-          // const cell_id = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
-          // const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
-          // const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
           const cell = this.#createCell(file, rank)
-          this.element.innerHTML += cell
+          this.#element.innerHTML += cell
         }
 
-        this.element.innerHTML += '\n'
+        this.#element.innerHTML += '\n'
       }
     } else {
       for (let rank = RANKS.RANK_1; rank <= RANKS.RANK_8; ++rank) {
         for (let file = FILES.FILE_H; file >= FILES.FILE_A; --file) {
-          // const cell_id = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
-          // const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
-          // const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
           const cell = this.#createCell(file, rank)
-          this.element.innerHTML += cell
+          this.#element.innerHTML += cell
         }
 
-        this.element.innerHTML += '\n'
+        this.#element.innerHTML += '\n'
       }
     }
   }
@@ -139,8 +120,7 @@ class Board {
         if (!Number.isNaN(blanks)) {
           while (blanks > 0) {
             const idx = this.fileAndRankToIdx(file, rank)
-            this.pieces[idx] = PIECES.EMPTY // new Piece({ type: PIECES.EMPTY, file: file, rank: rank, color: null })
-            // this.#addEventListenersToPiece(idx)
+            this.pieces[idx] = PIECES.EMPTY
 
             ++file
             --blanks
@@ -213,16 +193,13 @@ class Board {
 
           default:
             console.log(`default switch fen string: ${fen_string[stridx]}`)
-          // --file
         }
-        // this.#addEventListenersToPiece(idx)
         ++stridx;
       }
 
       ++stridx; // ignore '/' char
     }
 
-    // ++stridx
     gameInfo.colorToPlay = (fen_string[stridx] == 'w') ? COLORS.WHITE : COLORS.BLACK
 
     // white castle
