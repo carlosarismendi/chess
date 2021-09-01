@@ -41,9 +41,9 @@ func CreateGame(c echo.Context) error {
 		game := NewGame(ws, nil)
 		gameMap.addGame(token, game)
 
-		go game.ReceiveMessage(c, &game.Player1, &game.Player2)
-		go game.SendMessage(c, &game.Player1)
-		<-game.Quit
+		go game.Player1.ReceiveMessage(c, game.Player2)
+		go game.Player1.SendMessage(c)
+		<-game.Player1.Quit
 	}).ServeHTTP(c.Response(), c.Request())
 
 	gameMap.removeGame(token)
@@ -75,9 +75,9 @@ func JoinGame(c echo.Context) error {
 			return
 		}
 
-		go game.ReceiveMessage(c, &game.Player2, &game.Player1)
-		go game.SendMessage(c, &game.Player2)
-		<-game.Quit
+		go game.Player2.ReceiveMessage(c, game.Player1)
+		go game.Player2.SendMessage(c)
+		<-game.Player2.Quit
 	}).ServeHTTP(c.Response(), c.Request())
 
 	gameMap.removeGame(token)

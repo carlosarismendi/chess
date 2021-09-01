@@ -1,27 +1,46 @@
 class Game {
+  #boardSelector = null;
+  #playerColor = null;
+  #board = null;
+  #colorToPlay = null;
+  #isCheck = null;
+  #pawnJump = null;
+  #cellsToProtect = null;
+  #whiteCastle = null;
+  #blackCastle = null;
+  #whiteTimer = null;
+  #blackTimer = null;
+  #duration = null;
+  #wsConn = null;
+  #lastMoveSrc = null;
+  #lastMoveDst = null;
+  #gameStarted = null;
+  #moveAudio = null;
+  #gameInitAudio = null;
+
   constructor({ selector, fen_string, host = null, connPath = null, duration = 10 }) {
-    this.boardSelector = selector
-    this.playerColor = COLORS.WHITE
-    this.board = new Board({ selector: selector, colorDown: this.playerColor })
+    this.#boardSelector = selector
+    this.#playerColor = COLORS.WHITE
+    this.#board = new Board({ selector: selector, colorDown: this.#playerColor })
     this.createWebSocketConnection(host, connPath)
 
-    let gameInfo = this.board.initFromFENNotation(fen_string)
-    this.colorToPlay = gameInfo.colorToPlay
-    this.isCheck = false
-    this.pawnJump = -99
-    this.cellsToProtect = []
-    this.whiteCastle = gameInfo.whiteCastle
-    this.blackCastle = gameInfo.blackCastle
+    let gameInfo = this.#board.initFromFENNotation(fen_string)
+    this.#colorToPlay = gameInfo.colorToPlay
+    this.#isCheck = false
+    this.#pawnJump = -99
+    this.#cellsToProtect = []
+    this.#whiteCastle = gameInfo.whiteCastle
+    this.#blackCastle = gameInfo.blackCastle
 
     this.#addEventListenersToPieces()
 
-    this.whiteTimer = new Timer({ selector: 'up-timer', minutes: duration })
-    this.blackTimer = new Timer({ selector: 'down-timer', minutes: duration })
-    this.duration = duration
+    this.#whiteTimer = new Timer({ selector: 'up-timer', minutes: duration })
+    this.#blackTimer = new Timer({ selector: 'down-timer', minutes: duration })
+    this.#duration = duration
 
     window.addEventListener('timeout', ((event) => {
       let colorTimer = event.detail.colorTimer
-      if (colorTimer === this.playerColor) {
+      if (colorTimer === this.#playerColor) {
         this.sendWebSocketMessage(new MessageWS({ timeOut: true }))
 
         let detail = { title: 'You lose', body: 'You lose because of time.' }
@@ -30,71 +49,71 @@ class Game {
         let detail = { title: 'You win', body: 'You win because of time.' }
         window.dispatchEvent(new CustomEvent("win", { detail: detail }))
       }
-      this.wsConn.close()
+      this.#wsConn.close()
     }).bind(this))
 
-    this.lastMoveSrc = null
-    this.lastMoveDst = null
-    this.gameStarted = false
+    this.#lastMoveSrc = null
+    this.#lastMoveDst = null
+    this.#gameStarted = false
 
-    this.moveAudio = new Audio('../assets/chess-move.mp3')
-    this.gameInitAudio = new Audio('../assets/chess-init.mp3')
+    this.#moveAudio = new Audio('../assets/chess-move.mp3')
+    this.#gameInitAudio = new Audio('../assets/chess-init.mp3')
   }
 
   createWebSocketConnection(host, connPath) {
     if (!host || !connPath) {
-      this.wsConn = null
+      this.#wsConn = null
       return
     }
 
-    if (this.wsConn) {
+    if (this.#wsConn) {
       this.sendWebSocketMessage(new MessageWS({ abandon: true }))
-      this.wsConn.close()
+      this.#wsConn.close()
     }
 
     const protocol = (window.location.protocol.includes("s")) ? "wss" : "ws"
-    this.wsConn = new WebSocket(`${protocol}://${host}/${connPath}`,)
-    this.wsConn.onmessage = this.#onwsmessage.bind(this)
+    this.#wsConn = new WebSocket(`${protocol}://${host}/${connPath}`,)
+    this.#wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 
   sendWebSocketMessage(message) {
     const payload = message.toJSON()
     console.log(payload)
-    this.wsConn.send(payload)
+    this.#wsConn.send(payload)
   }
 
   restart() {
-    this.board = new Board({ selector: this.boardSelector, colorDown: this.playerColor })
+    this.#board = new Board({ selector: this.#boardSelector, colorDown: this.#playerColor })
 
-    let gameInfo = this.board.initFromFENNotation(INITIAL_POSITION_FEN)
-    this.colorToPlay = gameInfo.colorToPlay
-    this.whiteCastle = gameInfo.whiteCastle
-    this.blackCastle = gameInfo.blackCastle
-    this.isCheck = false
-    this.cellsToProtect = []
+    let gameInfo = this.#board.initFromFENNotation(INITIAL_POSITION_FEN)
+    this.#colorToPlay = gameInfo.colorToPlay
+    this.#whiteCastle = gameInfo.whiteCastle
+    this.#blackCastle = gameInfo.blackCastle
+    this.#isCheck = false
+    this.#cellsToProtect = []
 
     this.calcLegalMovesForAllPieces()
 
     this.#addEventListenersToPieces()
 
-    if (this.playerColor === COLORS.WHITE) {
-      this.whiteTimer = new Timer({ selector: 'down-timer', minutes: this.duration, colorTimer: COLORS.WHITE })
-      this.blackTimer = new Timer({ selector: 'up-timer', minutes: this.duration, colorTimer: COLORS.BLACK })
+    if (this.#playerColor === COLORS.WHITE) {
+      this.#whiteTimer = new Timer({ selector: 'down-timer', minutes: this.#duration, colorTimer: COLORS.WHITE })
+      this.#blackTimer = new Timer({ selector: 'up-timer', minutes: this.#duration, colorTimer: COLORS.BLACK })
     } else {
-      this.whiteTimer = new Timer({ selector: 'up-timer', minutes: this.duration, colorTimer: COLORS.WHITE })
-      this.blackTimer = new Timer({ selector: 'down-timer', minutes: this.duration, colorTimer: COLORS.BLACK })
+      this.#whiteTimer = new Timer({ selector: 'up-timer', minutes: this.#duration, colorTimer: COLORS.WHITE })
+      this.#blackTimer = new Timer({ selector: 'down-timer', minutes: this.#duration, colorTimer: COLORS.BLACK })
     }
 
-    this.whiteTimer.start()
-    this.gameStarted = true
-    this.gameInitAudio.play()
+    this.#whiteTimer.start()
+    this.#gameStarted = true
+    this.#gameInitAudio.play()
   }
 
   #addEventListenersToPieces() {
     for (let file = FILES.FILE_A; file <= FILES.FILE_H; ++file) {
       for (let rank = RANKS.RANK_1; rank <= RANKS.RANK_8; ++rank) {
-        let idx = this.board.fileAndRankToIdx(file, rank)
-        let element = this.board.getElementByIdx(idx)
+        let idx = this.#board.fileAndRankToIdx(file, rank)
+        let element = this.#board.getElementByIdx(idx)
 
         element.setAttribute('draggable', 'true')
         element.addEventListener('mousedown', this.#mousedown.bind(this, file, rank))
@@ -108,16 +127,16 @@ class Game {
 
   #mousedown(fileSrc, rankSrc, event) {
 
-    let { idx, piece } = this.board.getPiece(fileSrc, rankSrc)
+    let { idx, piece } = this.#board.getPiece(fileSrc, rankSrc)
 
-    if (piece && piece.color !== this.playerColor)
+    if (piece && piece.color !== this.#playerColor)
       return
 
     this.#showLegalMoves(piece)
   }
 
   #mouseup(fileSrc, rankSrc, event) {
-    let { idx, piece } = this.board.getPiece(fileSrc, rankSrc)
+    let { idx, piece } = this.#board.getPiece(fileSrc, rankSrc)
 
     this.#hideLegalMoves(piece)
   }
@@ -133,17 +152,17 @@ class Game {
 
   #drop(fileDst, rankDst, event) {
     event.preventDefault();
-    if (this.colorToPlay !== this.playerColor)
+    if (this.#colorToPlay !== this.#playerColor)
       return
 
-    let pieces = this.board.pieces
+    let pieces = this.#board.pieces
 
     // Target cell gets data from piece of source cell
     let { fileSrc, rankSrc } = JSON.parse(event.dataTransfer.getData('text/plain'))
-    let { idx: idxSrc, piece: pieceSrc } = this.board.getPiece(fileSrc, rankSrc)
-    let { idx: idxDst, piece: pieceDst } = this.board.getPiece(fileDst, rankDst)
+    let { idx: idxSrc, piece: pieceSrc } = this.#board.getPiece(fileSrc, rankSrc)
+    let { idx: idxDst, piece: pieceDst } = this.#board.getPiece(fileDst, rankDst)
 
-    if (pieceSrc && pieceSrc.color !== this.playerColor)
+    if (pieceSrc && pieceSrc.color !== this.#playerColor)
       return
 
     this.#hideLegalMoves(pieceSrc)
@@ -178,50 +197,50 @@ class Game {
     //pawn have moved in diagonal without kill
     if (pieceSrc.type === PIECES.PAWN && pieceDst == null && fileDst !== lastFile) {
       // console.log("dst: " + pieceDst)
-      let { idx, piece } = this.board.getPiece(fileDst, lastRank)
+      let { idx, piece } = this.#board.getPiece(fileDst, lastRank)
       console.log("piece: " + pieceDst)
-      this.board.removePiece(piece)
+      this.#board.removePiece(piece)
     }
     else {
-      this.board.removePiece(pieceDst)
+      this.#board.removePiece(pieceDst)
     }
 
     pieceSrc.firstMove = false
     pieceSrc.setCell(fileDst, rankDst)
-    this.board.pieces[idxSrc] = PIECES.EMPTY
-    this.board.pieces[idxDst] = pieceSrc.type | pieceSrc.color
+    this.#board.pieces[idxSrc] = PIECES.EMPTY
+    this.#board.pieces[idxDst] = pieceSrc.type | pieceSrc.color
 
     // Check if piece is a pawn that has reached promotion ranks
     if (pieceSrc.rank === RANKS.RANK_8 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.WHITE) {
-      this.board.PawnPromotion(pieceSrc, idxDst)
+      this.#board.PawnPromotion(pieceSrc, idxDst)
     }
     else if (pieceSrc.rank === RANKS.RANK_1 && pieceSrc.type === PIECES.PAWN && pieceSrc.color === COLORS.BLACK) {
-      this.board.PawnPromotion(pieceSrc, idxDst)
+      this.#board.PawnPromotion(pieceSrc, idxDst)
     }
     else if (pieceSrc.type === PIECES.KING) { // enroque
       if (idxSrc - idxDst === 2) { // left
         let idxRook = idxSrc - 4
         let idxDst = idxRook + 3
 
-        let { idx1, piece: lrook } = this.board.getPieceByIdx(idxRook)
-        let { idx2, piece: pieceDst } = this.board.getPieceByIdx(idxDst)
+        let { idx1, piece: lrook } = this.#board.getPieceByIdx(idxRook)
+        let { idx2, piece: pieceDst } = this.#board.getPieceByIdx(idxDst)
 
-        let { file, rank } = this.board.idxToFileAndRank(idxDst) // dst
+        let { file, rank } = this.#board.idxToFileAndRank(idxDst) // dst
         this.#moveSend(idxRook, lrook, idxDst, file, rank, pieceDst, false)
       }
       else if (idxSrc - idxDst === -2) { // right
         let idxRook = idxSrc + 3
         let idxDst = idxRook - 2
 
-        let { idx1, piece: lrook } = this.board.getPieceByIdx(idxRook)
-        let { idx2, piece: pieceDst } = this.board.getPieceByIdx(idxDst)
+        let { idx1, piece: lrook } = this.#board.getPieceByIdx(idxRook)
+        let { idx2, piece: pieceDst } = this.#board.getPieceByIdx(idxDst)
 
-        let { file, rank } = this.board.idxToFileAndRank(idxDst) // dst
+        let { file, rank } = this.#board.idxToFileAndRank(idxDst) // dst
         this.#moveSend(idxRook, lrook, idxDst, file, rank, pieceDst, false)
       }
     }
 
-    this.moveAudio.play()
+    this.#moveAudio.play()
   }
 
   #moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
@@ -231,37 +250,37 @@ class Game {
     //pawn have moved in diagonal without kill
     if (pieceSrc.type === PIECES.PAWN && pieceDst == null && fileDst !== lastFile) {
       // console.log("dst: " + pieceDst)
-      let { idx, piece } = this.board.getPiece(fileDst, lastRank)
+      let { idx, piece } = this.#board.getPiece(fileDst, lastRank)
       console.log("piece: " + pieceDst)
-      this.board.removePiece(piece)
+      this.#board.removePiece(piece)
     }
     else {
-      this.board.removePiece(pieceDst)
+      this.#board.removePiece(pieceDst)
     }
-    this.pawnJump = -99
+    this.#pawnJump = -99
     this.#showLastMove(idxSrc, idxDst)
 
     pieceSrc.firstMove = false
     pieceSrc.setCell(fileDst, rankDst)
-    this.board.pieces[idxSrc] = PIECES.EMPTY
-    this.board.pieces[idxDst] = pieceSrc.type | pieceSrc.color
+    this.#board.pieces[idxSrc] = PIECES.EMPTY
+    this.#board.pieces[idxDst] = pieceSrc.type | pieceSrc.color
 
     // Check if piece is a pawn that has reached promotion ranks
     if (pieceSrc.type === PIECES.PAWN) {
       if (pieceSrc.color === COLORS.WHITE) {
         if (pieceSrc.rank === RANKS.RANK_8) { // Last row
-          this.board.PawnPromotion(pieceSrc, idxDst)
+          this.#board.PawnPromotion(pieceSrc, idxDst)
         }
       }
       else {
         if (pieceSrc.rank === RANKS.RANK_1) { // Last row
-          this.board.PawnPromotion(pieceSrc, idxDst)
+          this.#board.PawnPromotion(pieceSrc, idxDst)
         }
       }
       // console.log("pawn move: " + (rankDst - lastRank))
       // check if the player jumped with the pawn
       if (abs(rankDst - lastRank) === 2) {
-        this.pawnJump = lastFile
+        this.#pawnJump = lastFile
         console.log("LOng pawn: " + fileDst)
       }
     }
@@ -270,20 +289,20 @@ class Game {
         let idxRook = idxSrc - 4
         let idxDst = idxRook + 3
 
-        let { idx1, piece: lrook } = this.board.getPieceByIdx(idxRook)
-        let { idx2, piece: pieceDst } = this.board.getPieceByIdx(idxDst)
+        let { idx1, piece: lrook } = this.#board.getPieceByIdx(idxRook)
+        let { idx2, piece: pieceDst } = this.#board.getPieceByIdx(idxDst)
 
-        let { file, rank } = this.board.idxToFileAndRank(idxDst) // dst
+        let { file, rank } = this.#board.idxToFileAndRank(idxDst) // dst
         this.#moveSend(idxRook, lrook, idxDst, file, rank, pieceDst, false)
       }
       else if (idxSrc - idxDst === -2) { // right
         let idxRook = idxSrc + 3
         let idxDst = idxRook - 2
 
-        let { idx1, piece: lrook } = this.board.getPieceByIdx(idxRook)
-        let { idx2, piece: pieceDst } = this.board.getPieceByIdx(idxDst)
+        let { idx1, piece: lrook } = this.#board.getPieceByIdx(idxRook)
+        let { idx2, piece: pieceDst } = this.#board.getPieceByIdx(idxDst)
 
-        let { file, rank } = this.board.idxToFileAndRank(idxDst) // dst
+        let { file, rank } = this.#board.idxToFileAndRank(idxDst) // dst
         this.#moveSend(idxRook, lrook, idxDst, file, rank, pieceDst, false)
       }
     }
@@ -292,25 +311,25 @@ class Game {
     this.searchForCheck()
     this.calcLegalMovesForAllPieces()
 
-    this.moveAudio.play()
+    this.#moveAudio.play()
   }
 
   // Calculates legal moves for all pieces and send a message if its checkmate
   async calcLegalMovesForAllPieces() {
     let whiteCanMove = false
-    this.board.whitePieces.forEach(async piece => {
-      this.board.calcLegalMoves(piece, this.colorToPlay, this.isCheck, this.cellsToProtect, this.pawnJump)
+    this.#board.whitePieces.forEach(async piece => {
+      this.#board.calcLegalMoves(piece, this.#colorToPlay, this.#isCheck, this.#cellsToProtect, this.#pawnJump)
       whiteCanMove = piece.legalMoves.length > 0 || whiteCanMove
     })
 
     let blackCanMove = false
-    this.board.blackPieces.forEach(async piece => {
-      this.board.calcLegalMoves(piece, this.colorToPlay, this.isCheck, this.cellsToProtect, this.pawnJump)
+    this.#board.blackPieces.forEach(async piece => {
+      this.#board.calcLegalMoves(piece, this.#colorToPlay, this.#isCheck, this.#cellsToProtect, this.#pawnJump)
       blackCanMove = piece.legalMoves.length > 0 || blackCanMove
     })
 
-    let checkmate = (this.colorToPlay === COLORS.BLACK && !blackCanMove)
-    checkmate = (this.colorToPlay === COLORS.WHITE && !whiteCanMove) || checkmate
+    let checkmate = (this.#colorToPlay === COLORS.BLACK && !blackCanMove)
+    checkmate = (this.#colorToPlay === COLORS.WHITE && !whiteCanMove) || checkmate
 
     if (checkmate) {
       this.sendWebSocketMessage(new MessageWS({ checkMate: true }))
@@ -323,59 +342,59 @@ class Game {
     Sets variables isCheck and cellsToProtect
   */
   searchForCheck() {
-    let king = this.board.getKing(this.colorToPlay)
-    let kingIdx = this.board.fileAndRankToIdx(king.file, king.rank)
-    let enemyColor = this.colorToPlay ^ COLORS.WHITE
-    let bullies = this.board.bullyPiecesIdx(kingIdx, enemyColor)
+    let king = this.#board.getKing(this.#colorToPlay)
+    let kingIdx = this.#board.fileAndRankToIdx(king.file, king.rank)
+    let enemyColor = this.#colorToPlay ^ COLORS.WHITE
+    let bullies = this.#board.bullyPiecesIdx(kingIdx, enemyColor)
 
     if (bullies.length != 0) {
-      this.isCheck = true
-      this.cellsToProtect = []
+      this.#isCheck = true
+      this.#cellsToProtect = []
 
       if (bullies.length > 1) { // cant be bloqued
-        this.cellsToProtect = []
+        this.#cellsToProtect = []
       }
       else {
         let bullyIdx = bullies[0]
-        let bullyTypeColor = this.board.pieces[bullyIdx] // type | color
+        let bullyTypeColor = this.#board.pieces[bullyIdx] // type | color
         let bullyColor = bullyTypeColor & COLORS.WHITE
         let bullyType = bullyTypeColor - bullyColor
 
         if (bullyType === PIECES.KNIGHT) { // cant block knight, only kill him
-          this.cellsToProtect = this.cellsToProtect.concat(bullyIdx)
+          this.#cellsToProtect = this.#cellsToProtect.concat(bullyIdx)
         } else {
-          this.cellsToProtect = this.cellsToProtect.concat(this.board.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KING)) //path to block or kill
+          this.#cellsToProtect = this.#cellsToProtect.concat(this.#board.getMovesFromTo(kingIdx, bullyIdx, PIECE_OFFSETS.KING)) //path to block or kill
         }
 
       }
     } else {
-      this.isCheck = false
-      this.cellsToProtect = []
+      this.#isCheck = false
+      this.#cellsToProtect = []
     }
   }
 
   #updateTurn() {
-    if (this.colorToPlay === COLORS.WHITE) {
-      this.whiteTimer.pause()
-      this.blackTimer.start()
+    if (this.#colorToPlay === COLORS.WHITE) {
+      this.#whiteTimer.pause()
+      this.#blackTimer.start()
 
-      this.whiteTimer.element.classList.add('timer-stop')
-      this.blackTimer.element.classList.remove('timer-stop')
-      this.colorToPlay = COLORS.BLACK
+      this.#whiteTimer.element.classList.add('timer-stop')
+      this.#blackTimer.element.classList.remove('timer-stop')
+      this.#colorToPlay = COLORS.BLACK
     } else {
-      this.whiteTimer.start()
-      this.blackTimer.pause()
+      this.#whiteTimer.start()
+      this.#blackTimer.pause()
 
-      this.whiteTimer.element.classList.remove('timer-stop')
-      this.blackTimer.element.classList.add('timer-stop')
-      this.colorToPlay = COLORS.WHITE
+      this.#whiteTimer.element.classList.remove('timer-stop')
+      this.#blackTimer.element.classList.add('timer-stop')
+      this.#colorToPlay = COLORS.WHITE
     }
   }
 
   #endGame() {
-    this.whiteTimer.pause()
-    this.blackTimer.pause()
-    this.wsConn.close()
+    this.#whiteTimer.pause()
+    this.#blackTimer.pause()
+    this.#wsConn.close()
   }
 
   #onwsmessage(event) {
@@ -393,6 +412,7 @@ class Game {
 
     if (msg.checkmate) {
       let detail = { title: 'You lose', body: 'You lose because of chekmate.' }
+      console.log(detail)
       window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
       this.#endGame()
       return
@@ -413,19 +433,19 @@ class Game {
     }
 
     if (msg.gamestart) {
-      this.playerColor = (msg.color == "White") ? COLORS.WHITE : COLORS.BLACK
+      this.#playerColor = (msg.color == "White") ? COLORS.WHITE : COLORS.BLACK
       this.restart()
       return
     }
 
-    let { idx: idxSrc, piece: pieceSrc } = this.board.getPiece(msg.filesrc, msg.ranksrc)
-    let { idx: idxDst, piece: pieceDst } = this.board.getPiece(msg.filedst, msg.rankdst)
+    let { idx: idxSrc, piece: pieceSrc } = this.#board.getPiece(msg.filesrc, msg.ranksrc)
+    let { idx: idxDst, piece: pieceDst } = this.#board.getPiece(msg.filedst, msg.rankdst)
 
     this.#moveReceive(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
   }
 
   abandonGame() {
-    if (this.gameStarted) {
+    if (this.#gameStarted) {
       this.sendWebSocketMessage(new MessageWS({ abandon: true }))
 
       let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }
@@ -440,7 +460,7 @@ class Game {
     if (!piece) return
 
     piece.legalMoves.forEach(idx => {
-      let element = this.board.getElementByIdx(idx)
+      let element = this.#board.getElementByIdx(idx)
       element.classList.add('legal-move')
     });
   }
@@ -449,7 +469,7 @@ class Game {
     if (!piece) return
 
     piece.legalMoves.forEach(idx => {
-      let element = this.board.getElementByIdx(idx)
+      let element = this.#board.getElementByIdx(idx)
       element.classList.remove('legal-move')
     });
   }
@@ -457,17 +477,17 @@ class Game {
   async #showLastMove(idxSrc, idxDst) {
     this.#hideLastMove()
 
-    this.lastMoveSrc = this.board.getElementByIdx(idxSrc)
-    this.lastMoveDst = this.board.getElementByIdx(idxDst)
+    this.#lastMoveSrc = this.#board.getElementByIdx(idxSrc)
+    this.#lastMoveDst = this.#board.getElementByIdx(idxDst)
 
-    this.lastMoveSrc.classList.add('last-move')
-    this.lastMoveDst.classList.add('last-move')
+    this.#lastMoveSrc.classList.add('last-move')
+    this.#lastMoveDst.classList.add('last-move')
   }
 
   async #hideLastMove() {
-    if (this.lastMoveSrc && this.lastMoveDst) {
-      this.lastMoveSrc.classList.remove('last-move')
-      this.lastMoveDst.classList.remove('last-move')
+    if (this.#lastMoveSrc && this.#lastMoveDst) {
+      this.#lastMoveSrc.classList.remove('last-move')
+      this.#lastMoveDst.classList.remove('last-move')
     }
   }
 }

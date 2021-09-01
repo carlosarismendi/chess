@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"sync"
 
 	"github.com/labstack/echo/v4"
@@ -21,39 +20,60 @@ type MessageWS struct {
 	TimeOut    bool `json:"timeout"`
 }
 
-func (m *MessageWS) toJSON() ([]byte, error) {
-	return json.Marshal(m)
-}
-
 type Player struct {
 	Color string
 	Msgs  chan MessageWS
 	Conn  *websocket.Conn
+	Quit  chan bool
+}
+
+func NewPlayer(color string, wsConn *websocket.Conn) *Player {
+	return &Player{
+		Color: color,
+		Msgs:  make(chan MessageWS, 1),
+		Conn:  wsConn,
+		Quit:  make(chan bool, 1),
+	}
+}
+
+func (p *Player) ReceiveMessage(c echo.Context, opponent *Player) {
+	for {
+		msg, err := ReceiveSocketMessage(c, p.Conn)
+		if err != nil {
+			break
+		}
+
+		opponent.Msgs <- msg
+		if msg.TimeOut || msg.Abandon || msg.CheckMate {
+			break
+		}
+	}
+	p.Quit <- true
+	close(p.Quit)
+}
+
+func (p *Player) SendMessage(c echo.Context) {
+	for {
+		msg := <-p.Msgs
+		SendSocketMessage(c, p.Conn, msg)
+
+		if msg.TimeOut || msg.Abandon || msg.CheckMate {
+			break
+		}
+	}
+
+	close(p.Msgs)
 }
 
 type Game struct {
-	Player1      Player
-	Player2      Player
-	Player1Plays bool
-	Turn         chan bool
-	Quit         chan bool
+	Player1 *Player
+	Player2 *Player
 }
 
 func NewGame(p1Conn *websocket.Conn, p2Conn *websocket.Conn) *Game {
 	return &Game{
-		Player1: Player{
-			Color: "White",
-			Msgs:  make(chan MessageWS, 1),
-			Conn:  p1Conn,
-		},
-		Player2: Player{
-			Color: "Black",
-			Msgs:  make(chan MessageWS, 1),
-			Conn:  p2Conn,
-		},
-		Player1Plays: true,
-		Turn:         make(chan bool, 1),
-		Quit:         make(chan bool, 2),
+		Player1: NewPlayer("White", p1Conn),
+		Player2: NewPlayer("Black", p2Conn),
 	}
 }
 
@@ -67,34 +87,6 @@ func (g *Game) Start(c echo.Context) (errP1 error, errP2 error) {
 	data["color"] = g.Player2.Color
 	errP2 = SendSocketMessage(c, g.Player2.Conn, data)
 	return
-}
-
-func (g *Game) ReceiveMessage(c echo.Context, p *Player, opponent *Player) {
-	for {
-		msg, err := ReceiveSocketMessage(c, p.Conn)
-		if err != nil {
-			break
-		}
-
-		opponent.Msgs <- msg
-		if msg.TimeOut || msg.Abandon || msg.CheckMate {
-			break
-		}
-	}
-	g.Quit <- true
-}
-
-func (g *Game) SendMessage(c echo.Context, p *Player) {
-	for {
-		msg := <-p.Msgs
-		SendSocketMessage(c, p.Conn, msg)
-
-		if msg.TimeOut || msg.Abandon || msg.CheckMate {
-			break
-		}
-	}
-
-	close(p.Msgs)
 }
 
 type GameMap struct {
