@@ -78,7 +78,6 @@ class Game {
 
   #sendWebSocketMessage(message) {
     const payload = message.toJSON()
-    console.log(payload)
     this.#wsConn.send(payload)
   }
 
@@ -195,7 +194,6 @@ class Game {
     this.#showLastMove(idxSrc, idxDst)
 
     let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDst: fileDst, rankDst: rankDst })
-    console.log("moveSend: ", payload)
     if (send) this.#sendWebSocketMessage(payload)
 
     let lastRank = pieceSrc.rank
@@ -203,9 +201,7 @@ class Game {
 
     //pawn have moved in diagonal without kill
     if (pieceSrc.type === PIECES.PAWN && pieceDst == null && fileDst !== lastFile) {
-      // console.log("dst: " + pieceDst)
       let { idx, piece } = this.#board.getPiece(fileDst, lastRank)
-      console.log("piece: " + pieceDst)
       this.#board.removePiece(piece)
     }
     else {
@@ -256,9 +252,7 @@ class Game {
 
     //pawn have moved in diagonal without kill
     if (pieceSrc.type === PIECES.PAWN && pieceDst == null && fileDst !== lastFile) {
-      // console.log("dst: " + pieceDst)
       let { idx, piece } = this.#board.getPiece(fileDst, lastRank)
-      console.log("piece: " + pieceDst)
       this.#board.removePiece(piece)
     }
     else {
@@ -284,11 +278,10 @@ class Game {
           this.#board.PawnPromotion(pieceSrc, idxDst)
         }
       }
-      // console.log("pawn move: " + (rankDst - lastRank))
+
       // check if the player jumped with the pawn
       if (abs(rankDst - lastRank) === 2) {
         this.#pawnJump = lastFile
-        console.log("LOng pawn: " + fileDst)
       }
     }
     else if (pieceSrc.type === PIECES.KING) { // enroque
@@ -400,7 +393,6 @@ class Game {
 
   #onwsmessage(event) {
     let msg = JSON.parse(event.data)
-    console.log("## WSMessage: ", msg)
 
     if (msg.errorcode || (typeof msg) == 'number') {
       return
@@ -412,7 +404,6 @@ class Game {
     }
 
     if (msg.checkmate) {
-      console.log("CHECKMATE")
       let detail = { title: 'You lose', body: 'You lose because of chekmate.' }
       window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
       this.#endGame()

@@ -1,4 +1,6 @@
 class MessageWS {
+  #json = null
+
   constructor({
     fileSrc = 0, rankSrc = 0,
     fileDst = 0, rankDst = 0,
@@ -8,7 +10,7 @@ class MessageWS {
     createGame = false,
     timeOut = false
   }) {
-    this.json = {
+    this.#json = {
       fileSrc: fileSrc,
       rankSrc: rankSrc,
       fileDst: fileDst,
@@ -22,6 +24,6 @@ class MessageWS {
   }
 
   toJSON() {
-    return JSON.stringify(this.json).toLowerCase()
+    return JSON.stringify(this.#json).toLowerCase()
   }
 }
