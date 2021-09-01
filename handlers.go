@@ -4,38 +4,40 @@ import (
 	"crypto/md5"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/websocket"
 )
 
-var lock sync.RWMutex = sync.RWMutex{}
-var games map[string]*Game = make(map[string]*Game)
+// var lock sync.RWMutex = sync.RWMutex{}
+// var games map[string]*Game = make(map[string]*Game)
 
-func addGame(token string, game *Game) {
-	lock.Lock()
-	games[token] = game
-	lock.Unlock()
-}
+// func addGame(token string, game *Game) {
+// 	lock.Lock()
+// 	games[token] = game
+// 	lock.Unlock()
+// }
 
-func removeGame(token string) {
-	lock.Lock()
-	_, exits := games[token]
-	if exits {
-		delete(games, token)
-	}
-	lock.Unlock()
-}
+// func removeGame(token string) {
+// 	lock.Lock()
+// 	_, exits := games[token]
+// 	if exits {
+// 		delete(games, token)
+// 		fmt.Println(games)
+// 	}
+// 	lock.Unlock()
+// }
 
-func getGame(token string) (game *Game, exists bool) {
-	lock.RLock()
-	game, exists = games[token]
-	lock.RUnlock()
+// func getGame(token string) (game *Game, exists bool) {
+// 	lock.RLock()
+// 	game, exists = games[token]
+// 	lock.RUnlock()
 
-	return
-}
+// 	return
+// }
+
+var gameMap *GameMap = NewGameMap()
 
 func generateToken() string {
 	currentDateStr := time.Now().String()
@@ -64,25 +66,14 @@ func CreateGame(c echo.Context) error {
 		}
 
 		game := NewGame(ws, nil)
-		addGame(token, game)
+		gameMap.addGame(token, game)
 
-		for {
-			select {
-			case <-game.Turn:
-				endGame := ReceiveAndSendSocketMessage(c, game.Player1.Conn, game.Player2.Conn)
-				game.Turn <- true
-
-				if endGame {
-					break
-				}
-				break
-			case <-time.After(5 * 60 * time.Second): // 5 minutes
-				return
-			}
-		}
+		go game.ReceiveMessage(c, &game.Player1, &game.Player2)
+		go game.SendMessage(c, &game.Player1)
+		<-game.Quit
 	}).ServeHTTP(c.Response(), c.Request())
 
-	removeGame(token)
+	gameMap.removeGame(token)
 	return nil
 }
 
@@ -93,7 +84,7 @@ func JoinGame(c echo.Context) error {
 
 		// User joins a game by invitation link
 		token = c.Param("token")
-		game, exits := getGame(token)
+		game, exits := gameMap.getGame(token)
 		if !exits {
 			SendSocketMessage(c, ws, http.StatusNotFound)
 			c.Logger().Error(fmt.Sprintf("Game with token %s does not exists.\n", token))
@@ -111,18 +102,12 @@ func JoinGame(c echo.Context) error {
 			return
 		}
 
-		game.Turn <- true
-		for {
-			<-game.Turn
-			endGame := ReceiveAndSendSocketMessage(c, game.Player2.Conn, game.Player1.Conn)
-			game.Turn <- true
-
-			if endGame {
-				break
-			}
-		}
+		go game.ReceiveMessage(c, &game.Player2, &game.Player1)
+		go game.SendMessage(c, &game.Player2)
+		<-game.Quit
 	}).ServeHTTP(c.Response(), c.Request())
 
-	removeGame(token)
+	fmt.Println("JOIN-GAME SOCKET CLOSED")
+	gameMap.removeGame(token)
 	return nil
 }

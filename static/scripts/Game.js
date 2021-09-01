@@ -365,9 +365,10 @@ class Game {
     }
   }
 
-  #stopTimers() {
+  #endGame() {
     this.whiteTimer.pause()
     this.blackTimer.pause()
+    this.wsConn.close()
   }
 
   #onwsmessage(event) {
@@ -383,17 +384,24 @@ class Game {
       return
     }
 
+    if (msg.checkmate) {
+      let detail = { title: 'You lose', body: 'You lose because of chekmate.' }
+      window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
+      this.#endGame()
+      return
+    }
+
     if (msg.abandon) {
       let detail = { title: 'You win', body: 'You win because your oppenent abandoned.' }
       window.dispatchEvent(new CustomEvent("win", { detail: detail }))
-      this.#stopTimers()
+      this.#endGame()
       return
     }
 
     if (msg.timeout) {
       let detail = { title: 'You win', body: 'You win because of time.' }
       window.dispatchEvent(new CustomEvent("win", { detail: detail }))
-      this.#stopTimers()
+      this.#endGame()
       return
     }
 
@@ -412,12 +420,11 @@ class Game {
   abandonGame() {
     if (this.gameStarted) {
       this.sendWebSocketMessage(new MessageWS({ abandon: true }))
-      this.wsConn.close()
 
       let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }
       window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
 
-      this.#stopTimers()
+      this.#endGame()
     }
   }
 
