@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -34,22 +35,21 @@ func SendError(c echo.Context, ws *websocket.Conn, errorCode int) error {
 	payload["errorcode"] = errorCode
 	err := websocket.JSON.Send(ws, payload)
 	if err != nil {
+		fmt.Printf("[ERROR-send]: %v\n", err)
 		c.Logger().Error(err)
 		return err
 	}
 	return nil
 }
+
 func ReceiveAndSendSocketMessage(c echo.Context, wsIn *websocket.Conn, wsOut *websocket.Conn) bool {
-	msg := MessageWS{}
-	err := websocket.JSON.Receive(wsIn, &msg)
+	msg, err := ReceiveSocketMessage(c, wsIn)
 	if err != nil {
-		c.Logger().Error(err)
 		return true
 	}
 
-	err = websocket.JSON.Send(wsOut, msg)
+	err = SendSocketMessage(c, wsOut, msg)
 	if err != nil {
-		c.Logger().Error(err)
 		return true
 	}
 

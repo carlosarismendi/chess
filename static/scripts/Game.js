@@ -22,7 +22,7 @@ class Game {
     window.addEventListener('timeout', ((event) => {
       let colorTimer = event.detail.colorTimer
       if (colorTimer === this.playerColor) {
-        this.sendWebSocketMessage({ timeout: true })
+        this.sendWebSocketMessage(new MessageWS({ timeOut: true }))
 
         let detail = { title: 'You lose', body: 'You lose because of time.' }
         window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
@@ -45,6 +45,7 @@ class Game {
     }
 
     if (this.wsConn) {
+      this.sendWebSocketMessage(new MessageWS({ abandon: true }))
       this.wsConn.close()
     }
 
@@ -53,8 +54,9 @@ class Game {
     this.wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 
-  sendWebSocketMessage(jsonMessage) {
-    const payload = JSON.stringify(jsonMessage)
+  sendWebSocketMessage(message) {
+    const payload = message.toJSON()
+    console.log(payload)
     this.wsConn.send(payload)
   }
 
@@ -164,12 +166,8 @@ class Game {
 
     this.#showLastMove(idxSrc, idxDst)
 
-    // let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDs: fileDst, rankDst: rankDst })
-    let payload = {
-      filesrc: pieceSrc.file, ranksrc: pieceSrc.rank, filedst: fileDst, rankdst: rankDst,
-      legalmove: false, checkmate: false, abandon: false, creategame: false
-    }
-
+    let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDst: fileDst, rankDst: rankDst })
+    console.log("moveSend: ", payload)
     if (send) this.sendWebSocketMessage(payload)
 
     let lastRank = pieceSrc.rank
@@ -309,7 +307,7 @@ class Game {
     checkmate = (this.colorToPlay === COLORS.WHITE && !whiteCanMove) || checkmate
 
     if (checkmate) {
-      this.sendWebSocketMessage({ checkmate: true })
+      this.sendWebSocketMessage(new MessageWS({ checkMate: true }))
     }
 
     return checkmate
@@ -647,7 +645,6 @@ class Game {
     return checks
   }
 
-
   #calcKingMoves(king, offsets) {
     let kingIdx = this.board.fileAndRankToIdx(king.file, king.rank)
 
@@ -767,7 +764,7 @@ class Game {
 
   #onwsmessage(event) {
     let msg = JSON.parse(event.data)
-    console.log(msg)
+    console.log("## WSMessage: ", msg)
 
     if (msg.errorcode || (typeof msg) == 'number') {
       return
@@ -806,7 +803,7 @@ class Game {
 
   abandonGame () {
     if (this.gameStarted) {
-      this.sendWebSocketMessage({ abandon: true })
+      this.sendWebSocketMessage(new MessageWS({ abandon: true }))
       this.wsConn.close()
 
       let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }

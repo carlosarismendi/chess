@@ -1,23 +1,27 @@
 class MessageWS {
   constructor({
-    fileSrc = null, rankSrc = null,
-    fileDst = null, rankDst = null,
-    legalMove = null,
-    checkMate = null,
-    abandon = null,
-    createGame = null
+    fileSrc = 0, rankSrc = 0,
+    fileDst = 0, rankDst = 0,
+    legalMove = false,
+    checkMate = false,
+    abandon = false,
+    createGame = false,
+    timeOut = false
   }) {
-    this.fileSrc    = fileSrc
-    this.rankSrc    = rankSrc
-    this.fileDst    = fileDst
-    this.rankDst    = rankDst
-    this.legalMove  = legalMove
-    this.checkMate  = checkMate
-    this.abandon    = abandon
-    this.createGame = createGame
+    this.json = {
+      fileSrc: fileSrc,
+      rankSrc: rankSrc,
+      fileDst: fileDst,
+      rankDst: rankDst,
+      legalMove: legalMove,
+      checkMate: checkMate,
+      abandon: abandon,
+      createGame: createGame,
+      timeOut: timeOut
+    }
   }
 
-  toJson() {
-    return JSON.stringify(this).toLowerCase()
+  toJSON() {
+    return JSON.stringify(this.json).toLowerCase()
   }
 }
