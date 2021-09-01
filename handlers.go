@@ -10,33 +10,6 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// var lock sync.RWMutex = sync.RWMutex{}
-// var games map[string]*Game = make(map[string]*Game)
-
-// func addGame(token string, game *Game) {
-// 	lock.Lock()
-// 	games[token] = game
-// 	lock.Unlock()
-// }
-
-// func removeGame(token string) {
-// 	lock.Lock()
-// 	_, exits := games[token]
-// 	if exits {
-// 		delete(games, token)
-// 		fmt.Println(games)
-// 	}
-// 	lock.Unlock()
-// }
-
-// func getGame(token string) (game *Game, exists bool) {
-// 	lock.RLock()
-// 	game, exists = games[token]
-// 	lock.RUnlock()
-
-// 	return
-// }
-
 var gameMap *GameMap = NewGameMap()
 
 func generateToken() string {
@@ -107,7 +80,6 @@ func JoinGame(c echo.Context) error {
 		<-game.Quit
 	}).ServeHTTP(c.Response(), c.Request())
 
-	fmt.Println("JOIN-GAME SOCKET CLOSED")
 	gameMap.removeGame(token)
 	return nil
 }
