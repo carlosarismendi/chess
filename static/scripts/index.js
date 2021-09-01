@@ -24,7 +24,7 @@ function init () {
 
 function newGame () {
   game.createWebSocketConnection(host, 'new-game')
-  let evt = { detail: { title: 'Game created', body: `Click on "Play with friends" to obtain the share link.` }}
+  let evt = { detail: { title: 'Game created', body: `Click on "Copy link" to obtain the share link.` }}
   showModal(evt)
 }
 
@@ -36,7 +36,7 @@ function copyInivitationLink() {
   if (!game.gameUrl) return
 
   navigator.clipboard.writeText(game.gameUrl)
-  let evt = { detail: { title: 'Share link', body: `The share link has been copies to your clipboard.` }}
+  let evt = { detail: { title: 'Share link', body: `The share link has been copied to your clipboard.` }}
   showModal(evt)
 }
 
