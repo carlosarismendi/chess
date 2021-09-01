@@ -36,6 +36,9 @@ class Game {
     this.lastMoveSrc = null
     this.lastMoveDst = null
     this.gameStarted = false
+
+    this.moveAudio = new Audio('../assets/chess-move.mp3')
+    this.gameInitAudio = new Audio('../assets/chess-init.mp3')
   }
 
   createWebSocketConnection(host, connPath) {
@@ -84,6 +87,7 @@ class Game {
 
     this.whiteTimer.start()
     this.gameStarted = true
+    this.gameInitAudio.play()
   }
 
   #addEventListenersToPieces() {
@@ -217,6 +221,7 @@ class Game {
       }
     }
 
+    this.moveAudio.play()
   }
 
   #moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst) {
@@ -286,6 +291,8 @@ class Game {
     this.#updateTurn()
     this.searchForCheck()
     this.calcLegalMovesForAllPieces()
+
+    this.moveAudio.play()
   }
 
   // Calculates legal moves for all pieces and send a message if its checkmate
