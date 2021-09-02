@@ -30,8 +30,6 @@ class Timer {
 
   pause () {
     this.#isStopped = true
-    if (this.timer)
-      clearInterval(this.timer)
   }
 
   reset () {
@@ -46,8 +44,6 @@ class Timer {
   setTimer(hours, minutes, seconds) {
     let wasStopped = this.#isStopped
 
-    this.pause()
-    console.log(minutes, seconds)
     this.currentTime.setHours(hours, minutes, seconds, 0)
     this.element.innerText = this.#timeStr(this.currentTime)
   }
