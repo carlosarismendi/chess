@@ -5,10 +5,10 @@ The main goal of this project is to develop a Chess game engine in Vanilla JavaS
 The backend is developed in Golang, with [Echo](https://github.com/labstack/echo). The "why" behind of using Golang as programming language for backend is to learn the language itself as well as its well-known and powerful features such as Goroutines.
 
 <p align="center">
-  <img src="readme-imgs/go-chess-init.png" alt="Chess game image" width="720px"/>
+  <img src="readme-imgs/go-chess-init.png" alt="Chess game image" width="580px"/>
 </p>
 <p align="center">
-  <img src="readme-imgs/legal-moves.png" alt="Chess game image with legal moves of white queen" width="720px"/>
+  <img src="readme-imgs/legal-moves.png" alt="Chess game image with legal moves of white queen" width="580px"/>
 </p>
 
 <!-- FRONTEND -->
