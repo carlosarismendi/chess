@@ -5,7 +5,10 @@ The main goal of this project is to develop a Chess game engine in Vanilla JavaS
 The backend is developed in Golang, with [Echo](https://github.com/labstack/echo). The "why" behind of using Golang as programming language for backend is to learn the language itself as well as its well-known and powerful features such as Goroutines.
 
 <p align="center">
-  <img src="readme-imgs/go-chess.png" alt="Chess game image" width="720px"/>
+  <img src="readme-imgs/go-chess-init.png" alt="Chess game image" width="720px"/>
+</p>
+<p align="center">
+  <img src="readme-imgs/legal-moves.png" alt="Chess game image with legal moves of white queen" width="720px"/>
 </p>
 
 <!-- FRONTEND -->
@@ -14,7 +17,7 @@ Here we can find the following classes:
 
 <ul>
   <li> <!-- PIECE CLASS -->
-    <p>      
+    <p>
       <strong>Piece</strong>: this represents both a piece in the board. It is represented by a type (pawn, bishop, knight...), file (A-Z) and rank (1-8), and color (black or white). Additionally, it contains an array where all its legal moves will be stored for each turn. This class is mainly used as a data container without any behaviour.
     </p>
   </li>
@@ -22,7 +25,7 @@ Here we can find the following classes:
   <li> <!-- BOARD CLASS -->
     <p>
       <strong>Board</strong>: as its name says, it represents the game board. Its properties are an array with all white pieces, an array with all black pieces and an array      representing the squares.
-    </p>    
+    </p>
     <p>
       Internally, the board is represented with 120 squares instead of 64 (8 files by 8 ranks). Each of these squares is an integer indicating the type of piece that is on it or indicating that that cell is empty or out of the board. All these additional <i>out of board</i> squares are used to simplify and optimize the legal move calculations.
     </p>
@@ -107,7 +110,7 @@ On this side, we find the following types:
       A game is created when a player send a request to the server of creating a new game. In this case, the server will generate a hashed token with <a href="https://en.wikipedia.org/wiki/MD5">MD5</a> and will make a create a share link with this token by appending it to the app URL. Once the share link is created, it is sent to the client who created the game and then two Goroutines will be created for this player waiting for messages and the beginning of its game.
     </p>
     <p>
-      When a second player joins a game through a share link, the server will check that the given token still exists and in case it does, a signal to both clientes will be sent indicating the beginning of the game and two Goroutines will be created for this player similarly they were created for the player who created the game. Otherwise, a 404 error will be send to the client. 
+      When a second player joins a game through a share link, the server will check that the given token still exists and in case it does, a signal to both clientes will be sent indicating the beginning of the game and two Goroutines will be created for this player similarly they were created for the player who created the game. Otherwise, a 404 error will be send to the client.
     </p>
   </li>
   <li> <!-- GAMEMAP TYPE -->
@@ -126,9 +129,9 @@ Do you want to play? You can find it <a href="https://go-chess.herokuapp.com/">h
 <ul>
   <li>
     <p>
-      <b>Carlos Eduardo Arismendi Sánchez</b>: 
+      <b>Carlos Eduardo Arismendi Sánchez</b>:
         <ul>
-          <li>              
+          <li>
             LinkedIn: <a href="https://www.linkedin.com/in/carlos-arismendi/">https://www.linkedin.com/in/carlos-arismendi/</a>
           </li>
           <li>
@@ -139,9 +142,9 @@ Do you want to play? You can find it <a href="https://go-chess.herokuapp.com/">h
   </li>
   <li>
     <p>
-      <b>Antón Chernysh</b>: 
+      <b>Antón Chernysh</b>:
         <ul>
-          <li>              
+          <li>
             LinkedIn: <a href="https://www.linkedin.com/in/anton-chernysh/">https://www.linkedin.com/in/anton-chernysh/</a>
           </li>
           <li>
@@ -151,4 +154,4 @@ Do you want to play? You can find it <a href="https://go-chess.herokuapp.com/">h
     </p>
   </li>
 </ul>
- 
+
