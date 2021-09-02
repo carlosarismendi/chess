@@ -1,7 +1,11 @@
 # Chess
 
+<!-- PLAY CHESS -->
+## Play chess
+Do you want to play? You can find it <a href="https://go-chess.herokuapp.com/">here</a>. It is totally free and no login is required.
 This chess not only allow players to play with official chess rules but also visualize legal moves of a selected piece, the last movement made and many other functionalities such as movement sound, game beginning sound, draw offer/declination/acceptance.
 
+## Description
 The main goal of this project is to develop a Chess game engine in Vanilla JavaScript in order to learn and practice how to manage DOM events, objects and WebSockets communications.
 
 The backend is developed in Golang, with [Echo](https://github.com/labstack/echo). The "why" behind of using Golang as programming language for backend is to learn the language itself as well as its well-known and powerful features such as Goroutines.
@@ -156,10 +160,6 @@ On this side, we find the following types:
     </p>
   </li>
 </ul>
-
-<!-- PLAY CHESS -->
-# Play chess
-Do you want to play? You can find it <a href="https://go-chess.herokuapp.com/">here</a>. It is totally free and no login is required.
 
 <!-- HOW TO RUN -->
 # How to run the project
