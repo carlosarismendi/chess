@@ -1,5 +1,5 @@
 const INITIAL_POSITION_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-// const INITIAL_POSITION_FEN = 'rnbqkbnr/pppp1p2/7p/4p1pQ/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1'
+// const INITIAL_POSITION_FEN = '8/8/7k/8/8/6Kr/8/8 w -- - 0 1'
 
 const FILES = {
   FILE_A: 0,

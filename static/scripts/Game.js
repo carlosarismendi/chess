@@ -106,6 +106,17 @@ class Game {
     this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.DECLINE_DRAW }))
   }
 
+  abandonGame() {
+    if (this.#gameStarted) {
+      this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.ABANDON }))
+
+      let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }
+      window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
+
+      this.#endGame()
+    }
+  }
+
   #sendWebSocketMessage(message) {
     if (!this.#wsConn) return
 
@@ -210,6 +221,7 @@ class Game {
     this.#moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, true)
 
     this.#updateTurn()
+    if (this.#isForcedDraw(true)) return
 
     this.#searchForCheck()
     const checkmate = this.#calcLegalMovesForAllPieces()
@@ -222,6 +234,8 @@ class Game {
     }
 
     if(this.#receiveDrawRequest) this.declineDraw()
+
+
   }
 
   #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, send = true) {
@@ -404,6 +418,23 @@ class Game {
     }
   }
 
+  /**
+   * The game is only king vs king
+   */
+  #isForcedDraw (sendSocket = false) {
+    if (this.#board.blackPieces.length === 1 && this.#board.whitePieces.length === 1) {
+      if (sendSocket)
+        this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.FORCED_DRAW }))
+
+      let detail = { title: 'Draw', body: 'Insufficient material.' }
+      showModal(new CustomEvent('modal', { detail: detail }))
+      this.#endGame()
+      return true
+    }
+
+    return false
+  }
+
   #updateTurn() {
     if (this.#colorToPlay === COLORS.WHITE) {
       this.#whiteTimer.pause()
@@ -491,6 +522,10 @@ class Game {
         this.#drawRequestActive = false
         return
 
+      case FLAGS_WS.FORCED_DRAW:
+        this.#isForcedDraw(false)
+        return
+
       case FLAGS_WS.GAME_START:
         this.#playerColor = (msg.color == "White") ? COLORS.WHITE : COLORS.BLACK
         this.#restart()
@@ -501,17 +536,6 @@ class Game {
         let { idx: idxDst, piece: pieceDst } = this.#board.getPieceByIdx(msg.idxdst)
         let { file: fileDst, rank: rankDst } = this.#board.idxToFileAndRank(idxDst)
         this.#moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst)
-    }
-  }
-
-  abandonGame() {
-    if (this.#gameStarted) {
-      this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.ABANDON }))
-
-      let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }
-      window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
-
-      this.#endGame()
     }
   }
 
