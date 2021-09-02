@@ -312,8 +312,8 @@ class Board {
   }
 
   /*
-    Return idx cells from src to dst trying all offsets
-    it includes idxDst but not idxSrc
+    Return idx cells from src to dst trying all offsets.
+    It includes idxDst but not idxSrc
   */
   getMovesFromTo(idxSrc, idxDst, offsets) {
     let moves = []
@@ -353,22 +353,16 @@ class Board {
   }
 
   /*
-    Returns if a specific type of piece is making check to some cell
+    Returns the index of a specific type of LONG RANGE piece if it is making check to some cell
   */
   checksWith(idxCell, colorToAtack, typeSearch, offsets) {
-    let pieces = this.pieces
     let checks = [] // idx of pieces making check
 
     offsets.forEach(off => {
       let moveIdx = off + idxCell
       while (this.isInBoard(moveIdx)) {
-        let pieceDst = pieces[moveIdx]
-        if (pieceDst !== PIECES.EMPTY) { // there is a piece
-          let pieceDstColor = pieceDst & COLORS.WHITE
-          let pieceType = pieceDst ^ pieceDstColor
-          if (pieceDstColor === colorToAtack && pieceType === typeSearch) { // enemy colour
-            checks.push(moveIdx)
-          }
+        if (this.pieces[moveIdx] !== PIECES.EMPTY) { // there is a piece
+          if(this.foundEnemy(moveIdx, colorToAtack, typeSearch)) checks.push(moveIdx)
           break // next offset
         }
         moveIdx += off
@@ -377,25 +371,30 @@ class Board {
     return checks
   }
 
+  /*
+    Returns the index of a specific type of SHORT RANGE piece if it is making check to some cell
+  */
   checksWithOneMove(idxCell, colorToAtack, typeSearch, offsets) {
-    let pieces = this.pieces
     let checks = [] // idx of pieces making check
 
     offsets.forEach(off => {
       let moveIdx = off + idxCell
       if (!this.isInBoard(moveIdx)) return
-
-      let pieceDst = pieces[moveIdx]
-      if (pieceDst !== PIECES.EMPTY) { // there is a piece
-        let pieceDstColor = pieceDst & COLORS.WHITE
-        let pieceType = pieceDst ^ pieceDstColor
-        if (pieceDstColor === colorToAtack && pieceType === typeSearch) { // enemy colour
-          checks.push(moveIdx)
-        }
-      }
-      moveIdx += off
+      if(this.foundEnemy(moveIdx, colorToAtack, typeSearch)) checks.push(moveIdx)
     })
     return checks
+  }
+
+  foundEnemy(idx, enemyColor, typeSearch) {
+    let piece = this.pieces[idx]
+    if (piece !== PIECES.EMPTY) { // there is a piece
+      let pieceColor = piece & COLORS.WHITE
+      let pieceType = piece - pieceColor
+      if (pieceColor === enemyColor && pieceType === typeSearch) { // enemy colour
+        return true
+      }
+    }
+    return false
   }
 
   /*
@@ -455,7 +454,7 @@ class Board {
         break
 
       case PIECES.KING:
-        this.calcKingMoves(pieceSrc, PIECE_OFFSETS.KING)
+        this.calcKingMoves(pieceSrc, PIECE_OFFSETS.KING, isCheck)
         break
     }
 
@@ -525,13 +524,12 @@ class Board {
   }
 
   calcLongRangePieceMoves(pieceSrc, offsets) {
-    let pieces = this.pieces
     let pieceIdx = this.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
     offsets.forEach(off => {
       let move = off + pieceIdx
       while (this.isInBoard(move)) {
-        let pieceDst = pieces[move]
+        let pieceDst = this.pieces[move]
         if (pieceDst === PIECES.EMPTY) {
           pieceSrc.legalMoves.push(move)
         } else {
@@ -541,15 +539,16 @@ class Board {
           }
           break
         }
-
         move += off
       }
     })
   }
 
-  calcKingMoves(king, offsets) {
+  calcKingMoves(king, offsets, isCheck) {
     let kingIdx = this.fileAndRankToIdx(king.file, king.rank)
+    let enemyColor = king.color ^ COLORS.WHITE
 
+    // Basic moves
     offsets.forEach(off => {
       let move = off + kingIdx
       if (!this.isInBoard(move)) return
@@ -561,28 +560,38 @@ class Board {
       }
     })
 
-    if (king.firstMove) {
+    // Castling
+    if (king.firstMove && !isCheck) {
       let { idx: lRookIdx, piece: lRook } = this.getPieceByIdx(kingIdx - 4)
       let { idx: rRookIdx, piece: rRook } = this.getPieceByIdx(kingIdx + 3)
 
       if (lRook && lRook.firstMove && this.emptyRoute(kingIdx, lRookIdx, -1)) {
-        king.legalMoves.push(kingIdx - 2)
+        let kingPath = this.getMovesFromTo(kingIdx, kingIdx - 2, [-1])
+        if (kingPath.every(cell => {
+          return this.bullyPiecesIdx(cell, enemyColor).length == 0
+        })) { // if the path doesnt have bullies
+          king.legalMoves.push(kingIdx - 2)
+        }
       }
       if (rRook && rRook.firstMove && this.emptyRoute(kingIdx, rRookIdx, 1)) {
-        king.legalMoves.push(kingIdx + 2)
+        let kingPath = this.getMovesFromTo(kingIdx, kingIdx + 2, [1])
+        if (kingPath.every(cell => {
+          return this.bullyPiecesIdx(cell, enemyColor).length == 0
+        })) { // if the path doesnt have bullies
+          king.legalMoves.push(kingIdx + 2)
+        }
       }
     }
   }
 
   calcKnightMoves(pieceSrc, offsets) {
-    let pieces = this.pieces
     let pieceIdx = this.fileAndRankToIdx(pieceSrc.file, pieceSrc.rank)
 
     offsets.forEach(off => {
       let move = off + pieceIdx
       if (!this.isInBoard(move)) return
 
-      let pieceDst = pieces[move]
+      let pieceDst = this.pieces[move]
       let pieceDstColor = pieceDst & COLORS.WHITE
       if (pieceDst === PIECES.EMPTY || pieceDstColor !== pieceSrc.color) {
         pieceSrc.legalMoves.push(move)
@@ -598,8 +607,6 @@ class Board {
 */
   subtractIlegalMoves(pieceSrc, colorToPlay, isCheck, cellsToProtect) {
     let enemyColor = colorToPlay ^ COLORS.WHITE
-
-    // let bullies = this.bullyPiecesIdx(kingIdx, enemyColor)
 
     if (isCheck) {
       if (pieceSrc.type == PIECES.KING) {
