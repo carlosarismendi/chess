@@ -146,6 +146,18 @@ On this side, we find the following types:
 # Play chess
 Do you want to play? You can find it <a href="https://go-chess.herokuapp.com/">here</a>. It is totally free and no login is required.
 
+<!-- HOW TO RUN -->
+# How to run the project
+If you are in a Windows machine, you just need to be located in the root folder of this project and run:
+```shell
+C:\user> runserver.bat
+```
+If you are in a Linux machine, you just need to be located in the root folder of this project and run:
+```bash
+foo@bar:~$ go run *
+```
+Once the server is up and running, open your browser and type ```localhost:8080``` and you will see the chess.
+
 <!-- AUTHORS -->
 # Authors
 <ul>
