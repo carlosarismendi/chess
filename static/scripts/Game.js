@@ -17,6 +17,8 @@ class Game {
   #gameStarted = null;
   #moveAudio = null;
   #gameInitAudio = null;
+  #drawRequestActive = null
+  #receiveDrawRequest = null
 
   constructor({ selector, fen_string, host = null, connPath = null, duration = 10 }) {
     this.#boardSelector = selector
@@ -41,13 +43,13 @@ class Game {
     window.addEventListener('timeout', ((event) => {
       let colorTimer = event.detail.colorTimer
       if (colorTimer === this.#playerColor) {
-        this.#sendWebSocketMessage(new MessageWS({ timeOut: true }))
+        this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.TIMEOUT }))
 
         let detail = { title: 'You lose', body: 'You lose because of time.' }
-        window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
+        window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
       } else {
         let detail = { title: 'You win', body: 'You win because of time.' }
-        window.dispatchEvent(new CustomEvent("win", { detail: detail }))
+        window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
       }
       this.#wsConn.close()
     }).bind(this))
@@ -67,7 +69,7 @@ class Game {
     }
 
     if (this.#wsConn) {
-      this.#sendWebSocketMessage(new MessageWS({ abandon: true }))
+      this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.ABANDON }))
       this.#wsConn.close()
     }
 
@@ -76,7 +78,33 @@ class Game {
     this.#wsConn.onmessage = this.#onwsmessage.bind(this)
   }
 
+  offerDraw() {
+    if (!this.#drawRequestActive) {
+      this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.OFFER_DRAW }))
+      this.#drawRequestActive = true
+    }
+  }
+
+  acceptDraw() {
+    this.#drawRequestActive = false
+    this.#receiveDrawRequest = false
+
+    let detail = { title: 'Draw', body: 'You have accepted draw.' }
+    window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
+    window.dispatchEvent(new CustomEvent("drawoffer", { detail: { hidden: true } }))
+    this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.ACCEPT_DRAW }))
+    this.#endGame()
+  }
+
+  declineDraw() {
+    this.#receiveDrawRequest = false
+    window.dispatchEvent(new CustomEvent("drawoffer", { detail: { hidden: true } }))
+    this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.DECLINE_DRAW }))
+  }
+
   #sendWebSocketMessage(message) {
+    if (!this.#wsConn) return
+
     const payload = message.toJSON()
     this.#wsConn.send(payload)
   }
@@ -128,7 +156,7 @@ class Game {
 
     let { idx, piece } = this.#board.getPiece(fileSrc, rankSrc)
 
-    if (piece && piece.color !== this.#playerColor)
+    if (piece && piece.color !== this.#playerColor || !this.#gameStarted)
       return
 
     this.#showLegalMoves(piece)
@@ -151,7 +179,7 @@ class Game {
 
   #drop(fileDst, rankDst, event) {
     event.preventDefault();
-    if (this.#colorToPlay !== this.#playerColor)
+    if (this.#colorToPlay !== this.#playerColor || !this.#gameStarted)
       return
 
     let pieces = this.#board.pieces
@@ -184,17 +212,22 @@ class Game {
 
     if (checkmate) {
       let detail = { title: 'You win', body: 'You win because of chekmate.' }
-      window.dispatchEvent(new CustomEvent("win", { detail: detail }))
-      this.#sendWebSocketMessage(new MessageWS({ checkMate: true }))
+      window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
+      this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.CHECKMATE }))
       this.#endGame()
     }
+
+    if(this.#receiveDrawRequest) this.declineDraw()
   }
 
   #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, send = true) {
     this.#showLastMove(idxSrc, idxDst)
 
-    let payload = new MessageWS({ fileSrc: pieceSrc.file, rankSrc: pieceSrc.rank, fileDst: fileDst, rankDst: rankDst })
-    if (send) this.#sendWebSocketMessage(payload)
+
+    if (send) {
+      let payload = new MessageWS({ idxSrc: idxSrc, idxDst: idxDst })
+      this.#sendWebSocketMessage(payload)
+    }
 
     let lastRank = pieceSrc.rank
     let lastFile = pieceSrc.file
@@ -389,6 +422,7 @@ class Game {
     this.#whiteTimer.pause()
     this.#blackTimer.pause()
     this.#wsConn.close()
+    this.#gameStarted = false
   }
 
   #onwsmessage(event) {
@@ -403,50 +437,67 @@ class Game {
       return
     }
 
-    if (msg.checkmate) {
-      let detail = { title: 'You lose', body: 'You lose because of chekmate.' }
-      window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
-      this.#endGame()
-      return
+    let detail = null
+    switch (msg.flag) {
+      case FLAGS_WS.CHECKMATE:
+        detail = { title: 'You lose', body: 'You lose because of chekmate.' }
+        window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
+        this.#endGame()
+        return
+
+      case FLAGS_WS.ABANDON:
+        detail = { title: 'You win', body: 'You win because your oppenent abandoned.' }
+        window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
+        this.#endGame()
+        return
+
+      case FLAGS_WS.TIMEOUT:
+        detail = { title: 'You win', body: 'You win because of time.' }
+        window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
+        this.#endGame()
+        return
+
+      case FLAGS_WS.OFFER_DRAW:
+        detail = { title: 'Draw offer', body: 'Your opponent offered draw.' }
+        window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
+        window.dispatchEvent(new CustomEvent("drawoffer", { detail: { hidden: false } }))
+        this.#receiveDrawRequest = true
+        return
+
+      case FLAGS_WS.ACCEPT_DRAW:
+        this.acceptDraw()
+        return
+
+      case FLAGS_WS.DECLINE_DRAW:
+        detail = { title: 'Draw offer', body: 'Your opponent declined draw.' }
+        window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
+        window.dispatchEvent(new CustomEvent("drawoffer", { detail: { hidden: true } }))
+        this.#drawRequestActive = false
+        return
+
+      case FLAGS_WS.GAME_START:
+        this.#playerColor = (msg.color == "White") ? COLORS.WHITE : COLORS.BLACK
+        this.#restart()
+        return
+
+      default:
+        let { idx: idxSrc, piece: pieceSrc } = this.#board.getPieceByIdx(msg.idxsrc)
+        let { idx: idxDst, piece: pieceDst } = this.#board.getPieceByIdx(msg.idxdst)
+        let { file: fileDst, rank: rankDst } = this.#board.idxToFileAndRank(idxDst)
+        this.#moveReceive(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst)
     }
-
-    if (msg.abandon) {
-      let detail = { title: 'You win', body: 'You win because your oppenent abandoned.' }
-      window.dispatchEvent(new CustomEvent("win", { detail: detail }))
-      this.#endGame()
-      return
-    }
-
-    if (msg.timeout) {
-      let detail = { title: 'You win', body: 'You win because of time.' }
-      window.dispatchEvent(new CustomEvent("win", { detail: detail }))
-      this.#endGame()
-      return
-    }
-
-    if (msg.gamestart) {
-      this.#playerColor = (msg.color == "White") ? COLORS.WHITE : COLORS.BLACK
-      this.#restart()
-      return
-    }
-
-    let { idx: idxSrc, piece: pieceSrc } = this.#board.getPiece(msg.filesrc, msg.ranksrc)
-    let { idx: idxDst, piece: pieceDst } = this.#board.getPiece(msg.filedst, msg.rankdst)
-
-    this.#moveReceive(idxSrc, pieceSrc, idxDst, msg.filedst, msg.rankdst, pieceDst)
   }
 
   abandonGame() {
     if (this.#gameStarted) {
-      this.#sendWebSocketMessage(new MessageWS({ abandon: true }))
+      this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.ABANDON }))
 
       let detail = { title: 'You lose', body: 'You lose because you have abandoned.' }
-      window.dispatchEvent(new CustomEvent("lose", { detail: detail }))
+      window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
 
       this.#endGame()
     }
   }
-
 
   async #showLegalMoves(piece) {
     if (!piece) return

@@ -11,8 +11,8 @@ window.onclick = (event) => {
 }
 
 function init () {
-  window.addEventListener("win", showModal)
-  window.addEventListener("lose", showModal)
+  window.addEventListener("modal", showModal)
+  window.addEventListener("drawoffer", showDrawOffer)
 
   game = new Game({ selector: '#board', fen_string: INITIAL_POSITION_FEN, wsConn: null })
 
@@ -32,6 +32,18 @@ function abandonGame () {
   game.abandonGame()
 }
 
+function offerDraw () {
+  game.offerDraw()
+}
+
+function acceptDraw () {
+  game.acceptDraw()
+}
+
+function declineDraw () {
+  game.declineDraw()
+}
+
 function copyInivitationLink() {
   if (!game.gameUrl) return
 
@@ -40,6 +52,8 @@ function copyInivitationLink() {
   showModal(evt)
 }
 
+
+// ###### EVENT HANDLERS ######
 function showModal(event) {
   let modal = document.getElementById('modal')
   let modalTitle = document.getElementById('modal-title')
@@ -54,4 +68,12 @@ function showModal(event) {
 function hideModal(event) {
   let modalElem = document.getElementById('modal')
   modalElem.style.display = 'none'
+}
+
+function showDrawOffer(event) {
+  let acceptElem = document.getElementById('accept-draw')
+  acceptElem.hidden = event.detail.hidden
+
+  let declineElem = document.getElementById('decline-draw')
+  declineElem.hidden = event.detail.hidden
 }

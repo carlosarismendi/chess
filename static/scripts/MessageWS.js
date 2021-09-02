@@ -2,24 +2,13 @@ class MessageWS {
   #json = null
 
   constructor({
-    fileSrc = 0, rankSrc = 0,
-    fileDst = 0, rankDst = 0,
-    legalMove = false,
-    checkMate = false,
-    abandon = false,
-    createGame = false,
-    timeOut = false
+    idxSrc = 0, idxDst = 0,
+    flag = FLAGS_WS.NONE
   }) {
     this.#json = {
-      fileSrc: fileSrc,
-      rankSrc: rankSrc,
-      fileDst: fileDst,
-      rankDst: rankDst,
-      legalMove: legalMove,
-      checkMate: checkMate,
-      abandon: abandon,
-      createGame: createGame,
-      timeOut: timeOut
+      idxSrc: idxSrc,
+      idxDst: idxDst,
+      flag: flag
     }
   }
 

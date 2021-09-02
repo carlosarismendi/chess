@@ -7,17 +7,30 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// If this consts are modified. const FLAGS_WS must be adapted to this in frontend in constants.js
+const (
+	NONE int8 = iota
+	GAME_START
+	CHECKMATE
+	TIMEOUT
+	ABANDON
+	OFFER_DRAW
+	ACCEPT_DRAW
+	DECLINE_DRAW
+	KING_DROWNED
+	FORCED_DRAW // This will happen when there are only kings or kings +  opposite bishops
+)
+
+func isGameFinished(flag int8) bool {
+	return flag == CHECKMATE || flag == TIMEOUT || flag == ABANDON ||
+		flag == ACCEPT_DRAW || flag == KING_DROWNED || flag == FORCED_DRAW
+}
+
 // Message for Websocket connections
 type MessageWS struct {
-	FileSrc    int  `json:"filesrc"`
-	RankSrc    int  `json:"ranksrc"`
-	FileDst    int  `json:"filedst"`
-	RankDst    int  `json:"rankdst"`
-	LegalMove  bool `json:"legalmove"`
-	CheckMate  bool `json:"checkmate"`
-	CreateGame bool `json:"creategame"`
-	Abandon    bool `json:"abandon"`
-	TimeOut    bool `json:"timeout"`
+	IdxSrc int8 `json:"idxsrc"`
+	IdxDst int8 `json:"idxdst"`
+	Flag   int8 `json:"flag"`
 }
 
 type Player struct {
@@ -44,7 +57,7 @@ func (p *Player) ReceiveMessage(c echo.Context, opponent *Player) {
 		}
 
 		opponent.Msgs <- msg
-		if msg.TimeOut || msg.Abandon || msg.CheckMate {
+		if isGameFinished(msg.Flag) {
 			break
 		}
 	}
@@ -57,7 +70,7 @@ func (p *Player) SendMessage(c echo.Context) {
 		msg := <-p.Msgs
 		SendSocketMessage(c, p.Conn, msg)
 
-		if msg.TimeOut || msg.Abandon || msg.CheckMate {
+		if isGameFinished(msg.Flag) {
 			break
 		}
 	}
@@ -79,7 +92,7 @@ func NewGame(p1Conn *websocket.Conn, p2Conn *websocket.Conn) *Game {
 
 func (g *Game) Start(c echo.Context) (errP1 error, errP2 error) {
 	data := make(map[string]interface{})
-	data["gamestart"] = true
+	data["flag"] = GAME_START
 	data["color"] = g.Player1.Color
 
 	errP1 = SendSocketMessage(c, g.Player1.Conn, data)
