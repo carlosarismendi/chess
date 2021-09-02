@@ -68,6 +68,7 @@ const FLAGS_WS = {
   ABANDON: 4,
   OFFER_DRAW: 5,
   ACCEPT_DRAW: 6,
-  KING_DROWNED: 7,
-  FORCED_DRAW: 8 // This will happen when there are only kings or kings +  opposite bishops
+  DECLINE_DRAW: 7,
+  KING_DROWNED: 8,
+  FORCED_DRAW: 9 // This will happen when there are only kings or kings +  opposite bishops
 }

@@ -16,6 +16,7 @@ const (
 	ABANDON
 	OFFER_DRAW
 	ACCEPT_DRAW
+	DECLINE_DRAW
 	KING_DROWNED
 	FORCED_DRAW // This will happen when there are only kings or kings +  opposite bishops
 )

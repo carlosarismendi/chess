@@ -33,7 +33,10 @@
 
     <!-- Chess board buttons -->
     <div>
+      <button id="accept-draw" type="button" class="btn btn-primary" onclick="acceptDraw()" hidden>Accept draw</button>
+      <button id="decline-draw" type="button" class="btn btn-primary" onclick="declineDraw()" hidden>Decline draw</button>
       <button id="new-game" type="button" class="btn btn-primary" onclick="newGame()">New game</button>
+      <button id="offer-draw" type="button" class="btn btn-primary" onclick="offerDraw()">Draw</button>
       <button id="invitation-link" type="button" onclick="copyInivitationLink()" class="btn btn-primary">Copy link</button>
       <button id="abandon-game" type="button" class="btn btn-primary" onclick="abandonGame()">Abandon</button>
     </div>
