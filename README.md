@@ -4,11 +4,33 @@ The main goal of this project is to develop a Chess game engine in Vanilla JavaS
 
 The backend is developed in Golang, with [Echo](https://github.com/labstack/echo). The "why" behind of using Golang as programming language for backend is to learn the language itself as well as its well-known and powerful features such as Goroutines.
 
-<p align="center">
-  <img src="readme-imgs/go-chess-init.png" alt="Chess game image" width="580px"/>
+<br>
+<p align="center"> <!-- CHECK -->
+  <img src="readme-imgs/check.png" alt="White bishop in B5 checks black king in E8 and black king can only move to E7 and F8" width="480px"/>  
+  <p align="center">
+    White bishop in B5 checks black king in E8 and black king can only move to E7 and F8.
+  </p>
 </p>
-<p align="center">
-  <img src="readme-imgs/legal-moves.png" alt="Chess game image with legal moves of white queen" width="580px"/>
+<br>
+<p align="center"> <!-- CHECK BLOCK -->
+  <img src="readme-imgs/check_block.png" alt="White bishop in D2 is blocking check from black bishop in B4" width="480px"/>  
+  <p align="center">
+    White bishop in D2 is blocking check from black bishop in B4, so the white bishop con only move in the same diagonal where both bishops are.
+  </p>
+</p>
+<br>
+<p align="center"> <!-- CASTLE -->
+  <img src="readme-imgs/castling.png" alt="White king can castle with H1 rook" width="480px"/>  
+  <p align="center">
+    White king can castle with H1 rook.
+  </p>
+</p>
+<br>
+<p align="center"> <!-- CANT CASTLE -->
+  <img src="readme-imgs/cant_castle.png" alt="White king can not castle with H1 rook because the black queen in G4 attacking G1." width="480px"/>  
+  <p align="center">
+    White king can not castle with H1 rook because the black queen in G4 attacking G1.
+  </p>
 </p>
 
 <!-- FRONTEND -->
@@ -65,7 +87,7 @@ Here we can find the following classes:
 
   <li> <!-- GAME CLASS -->
     <p>
-      <strong>Game</strong>: this is the game manager. It is in charge of initializing the board, calculating legal moves for all pieces after every move, managing the WebSockets communication with the backend by receiving, interpreting and sending MessageWS messages. Moreover, game rises events (show a modal, play sound...) whenever is necessary (draw offer, checkmate, timeout, etc.).
+      <strong>Game</strong>: this is the game manager. It is in charge of initializing the board, calculating legal moves (which is unquestionably the most difficult part of this project because of all the exceptions and possibilities that may happen and have to be controlled) for all pieces after every move, managing the WebSockets communication with the backend by receiving, interpreting and sending MessageWS messages. Moreover, game rises events (show a modal, play sound...) whenever is necessary (draw offer, checkmate, timeout, etc.).
     </p>
     <p>
       Game contains a large set of properties that are used to control the different events and situations that may happen during a game such as (check flags, color that must play...) and references to objects that manipulate the DOM (white timer, black timer...)
