@@ -8,7 +8,7 @@ The backend is developed in Golang, with [Echo](https://github.com/labstack/echo
   <img src="readme-imgs/go-chess.png" alt="Chess game image" width="720px"/>
 </p>
 
-## Front-End (Vanilla JavaScript, HTML, CSS)
+## Frontend (Vanilla JavaScript, HTML, CSS)
 Here we can find the following classes:
 
 <ul>
@@ -68,3 +68,35 @@ Here we can find the following classes:
     </p>
   </li>
 </ul>
+
+
+# Authors
+<ul>
+  <li>
+    <p>
+      <b>Carlos Eduardo Arismendi Sánchez</b>: 
+        <ul>
+          <li>              
+            LinkedIn: <a href="https://www.linkedin.com/in/carlos-arismendi/">https://www.linkedin.com/in/carlos-arismendi/</a>
+          </li>
+          <li>
+            Email: <a href="mailto:carlos.arismendisanchez@gmail.com">carlos.arismendisanchez@gmail.com</a>
+          </li>
+        </ul>
+    </p>
+  </li>
+  <li>
+    <p>
+      <b>Antón Chernysh</b>: 
+        <ul>
+          <li>              
+            LinkedIn: <a href="https://www.linkedin.com/in/anton-chernysh/">https://www.linkedin.com/in/anton-chernysh/</a>
+          </li>
+          <li>
+            Email: <a href="mailto:anton_chernysh@outlook.es">anton_chernysh@outlook.es</a>
+          </li>
+        </ul>
+    </p>
+  </li>
+</ul>
+ 
