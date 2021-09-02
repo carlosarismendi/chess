@@ -73,6 +73,10 @@ class Game {
       this.#wsConn.close()
     }
 
+    if (this.#gameStarted) {
+      this.#endGame()
+    }
+
     const protocol = (window.location.protocol.includes("s")) ? "wss" : "ws"
     this.#wsConn = new WebSocket(`${protocol}://${host}/${connPath}`,)
     this.#wsConn.onmessage = this.#onwsmessage.bind(this)
@@ -427,6 +431,7 @@ class Game {
 
   #onwsmessage(event) {
     let msg = JSON.parse(event.data)
+    // console.log(msg)
 
     if (msg.errorcode || (typeof msg) == 'number') {
       return
@@ -434,6 +439,17 @@ class Game {
 
     if (msg.url) {
       this.gameUrl = msg.url
+      return
+    }
+
+    if (msg.timer) {
+      if (this.#playerColor === COLORS.WHITE) {
+        this.#whiteTimer.setTimer(0, msg.timer.minutes, msg.timer.seconds)
+        this.#blackTimer.setTimer(0, msg.opponentTimer.minutes, msg.opponentTimer.seconds)
+      } else {
+        this.#whiteTimer.setTimer(0, msg.opponentTimer.minutes, msg.opponentTimer.seconds)
+        this.#blackTimer.setTimer(0, msg.timer.minutes, msg.timer.seconds)
+      }
       return
     }
 

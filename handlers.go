@@ -38,7 +38,7 @@ func CreateGame(c echo.Context) error {
 			return
 		}
 
-		game := NewGame(ws, nil)
+		game := NewGame(ws, nil, time.Minute*10)
 		gameMap.addGame(token, game)
 
 		go game.Player1.ReceiveMessage(c, game.Player2)
