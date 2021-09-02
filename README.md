@@ -117,6 +117,10 @@ On this side, we find the following types:
   </li>
 </ul>
 
+<!-- PLAY CHESS -->
+# Play chess
+Do you want to play? You can find it <a href="https://go-chess.herokuapp.com/">here</a>. It is totally free and no login is required.
+
 <!-- AUTHORS -->
 # Authors
 <ul>
