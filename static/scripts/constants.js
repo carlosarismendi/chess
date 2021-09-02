@@ -58,3 +58,15 @@ const PIECE_OFFSETS = {
   KING: [-1, 9, 10, 11, 1, -9, -10, -11], // left, up-left, up, up-right, right, down-right, down, down-ñeft
   QUEEN: [-1, 9, 10, 11, 1, -9, -10, -11], // left, up-left, up, up-right, right, down-right, down, down-ñeft
 }
+
+const FLAGS_WS = {
+  NONE: 0,
+  GAME_START: 1,
+  CHECKMATE: 2,
+  TIMEOUT: 3,
+  ABANDON: 4,
+  OFFER_DRAW: 5,
+  ACCEPT_DRAW: 6,
+  KING_DROWNED: 7,
+  FORCED_DRAW: 8 // This will happen when there are only kings or kings +  opposite bishops
+}
