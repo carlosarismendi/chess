@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// If this consts are modified. const FLAGS_WS must be adapted to this in frontend in constants.js
 const (
 	NONE int8 = iota
 	GAME_START

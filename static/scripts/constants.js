@@ -59,6 +59,7 @@ const PIECE_OFFSETS = {
   QUEEN: [-1, 9, 10, 11, 1, -9, -10, -11], // left, up-left, up, up-right, right, down-right, down, down-ñeft
 }
 
+// If this consts are modified. const ( flags... ) must be adapted to this in backend in types.go.
 const FLAGS_WS = {
   NONE: 0,
   GAME_START: 1,
