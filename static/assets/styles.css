@@ -18,6 +18,7 @@ body {
   width: 80vmin;
   height: 100%;
   margin: auto;
+  margin-top: 50px;
 }
 
 .btn {
