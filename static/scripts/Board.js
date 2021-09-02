@@ -93,7 +93,7 @@ class Board {
   #createCell(file, rank) {
     const cell_id = `cell-${String.fromCharCode(65 + file)}${rank + 1}`
     const cell_class = (file + rank) & 1 ? 'board-cell white' : 'board-cell black'
-    const cell = `<div id="${cell_id}" class="${cell_class}">${this.fileAndRankToIdx(file, rank)}</div>\n`
+    const cell = `<div id="${cell_id}" class="${cell_class}"></div>\n`
 
     return cell
   }
@@ -106,8 +106,6 @@ class Board {
     }
 
     this.pieces = new Array(120)
-    let rank = 0;
-    let file = 0;
     for (let i = 0; i < this.pieces.length; ++i)
       this.pieces[i] = PIECES.OUT_OF_BOARD
 
@@ -190,9 +188,6 @@ class Board {
             this.pieces[idx] = PIECES.KING | COLORS.WHITE
             this.whitePieces.push(new Piece({ type: PIECES.KING, file: file, rank: rank, color: COLORS.WHITE }))
             break
-
-          default:
-            console.log(`default switch fen string: ${fen_string[stridx]}`)
         }
         ++stridx;
       }

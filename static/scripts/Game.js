@@ -462,7 +462,6 @@ class Game {
 
   #onwsmessage(event) {
     let msg = JSON.parse(event.data)
-    // console.log(msg)
 
     if (msg.errorcode || (typeof msg) == 'number') {
       return
