@@ -8,6 +8,7 @@ The backend is developed in Golang, with [Echo](https://github.com/labstack/echo
   <img src="readme-imgs/go-chess.png" alt="Chess game image" width="720px"/>
 </p>
 
+<!-- FRONTEND -->
 ## Frontend (Vanilla JavaScript, HTML, CSS)
 Here we can find the following classes:
 
@@ -37,7 +38,7 @@ Here we can find the following classes:
   </li>
 
   <li>
-    <p> <!-- MESSAGE CLASS -->
+    <p> <!-- MESSAGEWS CLASS -->
       <strong>MessageWS</strong>: represents the message that must be sent through WebSockets to the backend everytime a relevant action occurs (movement of a piece, abandonment, draw offer, etc.). A message is made of three properties:
     </p>
     <ul>
@@ -69,6 +70,54 @@ Here we can find the following classes:
   </li>
 </ul>
 
+<!-- BACKEND -->
+## Backend
+On this side, we find the following types:
+
+<ul>
+  <li> <!-- MESSAGEWS TYPE -->
+    <p>
+      <strong>MessageWS</strong>: this is the equivalent to the <i>MessageWS</i> that we saw in Frontend.
+    </p>
+  </li>
+  <li> <!-- CHESSTIMER TYPE -->
+    <p>
+      <strong>ChessTimer</strong>: as its name says, this is the type used to represent game timers. Internally it has a <a href="https://pkg.go.dev/time#Time">time.Time</a> instance that is used to calculate and store the remaining time as well as a <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a> to control the access both for modifications and readings of the clock. Besides, it has a flag indicating if the timer is running or stopped and a <a href="https://pkg.go.dev/time#Duration">time.Duration</a> that is used to indicate the time elapsed between each timer update.
+    </p>
+  </li>
+  <li> <!-- PLAYER TYPE -->
+    <p>
+      <strong>Player</strong>: represents the players of a game and has color, a channel for messages, a pointer to the WebSocket connnection that links the backend to the client, a channel used to send/receive the "quit" signal and a pointer to its <i>Chess Timer</i>.
+    </p>
+    <p>
+      Once a game has started, each player has 2 Goroutines associated, one for receiving messages from its client and other for sending messages to its client. When a playerA receives a message from its client, it will redirect that message to the Send Goroutine associated to the playerB through playerB channel for messages and then playerB will send it to is client.
+    </p>
+    <p>
+      If a player receives in the message a flag indicating the end of the game (e.g. checkmate, draw, etc...), the quit channel will be filled and then all Goroutines associated to this player will be finished.
+    </p>
+    <p>
+      Otherwise, if the received message indicates that a piece has been moved, then the player will stop its timer and will start its opponent's.
+    </p>
+  </li>
+  <li> <!-- GAME TYPE -->
+    <p>
+      <strong>Game</strong>: represents a game and contains two pointers, one for each player and a quit channel. This is in charge of updating the timers as well as sending to both players the start signal once the second player joins the game through a share link.
+    </p>
+    <p>
+      A game is created when a player send a request to the server of creating a new game. In this case, the server will generate a hashed token with <a href="https://en.wikipedia.org/wiki/MD5">MD5</a> and will make a create a share link with this token by appending it to the app URL. Once the share link is created, it is sent to the client who created the game and then two Goroutines will be created for this player waiting for messages and the beginning of its game.
+    </p>
+    <p>
+      When a second player joins a game through a share link, the server will check that the given token still exists and in case it does, a signal to both clientes will be sent indicating the beginning of the game and two Goroutines will be created for this player similarly they were created for the player who created the game. Otherwise, a 404 error will be send to the client. 
+    </p>
+  </li>
+  <li> <!-- GAMEMAP TYPE -->
+    <p>
+      <strong>GameMap</strong>: it is a collection where all games that are being played and those that are waiting for a second player to join and begin are stored. This has two properties: a map with key of type string and a pointer of Game as value, and a <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a> instance to manage concurrent access to the map. Moreover, three methods are provided by this type: addGame(key, value), removeGame(key), getGame(key)(game, exists).
+    </p>
+  </li>
+</ul>
+
+<!-- AUTHORS -->
 # Authors
 <ul>
   <li>
