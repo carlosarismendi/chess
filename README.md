@@ -1,10 +1,27 @@
 # Chess
 
+This chess not only allow players to play with official chess rules but also visualize legal moves of a selected piece, the last movement made and many other functionalities such as movement sound, game beginning sound, draw offer/declination/acceptance.
+
 The main goal of this project is to develop a Chess game engine in Vanilla JavaScript in order to learn and practice how to manage DOM events, objects and WebSockets communications.
 
 The backend is developed in Golang, with [Echo](https://github.com/labstack/echo). The "why" behind of using Golang as programming language for backend is to learn the language itself as well as its well-known and powerful features such as Goroutines.
 
-<br>
+## Technologies summary
+<ul>
+  <li>
+    <p>
+      <strong>Frontend</strong>: Vanilla JavaScript, HTML, CSS
+    </p>
+  </li>  
+  <li>
+    <p>
+      <strong>Backend</strong>: <a href="https://golang.org/">Golang</a>, <a href="https://gobyexample.com/goroutines">Goroutines</a>, <a href="https://gobyexample.com/channels">Channels</a>, <a href="https://pkg.go.dev/golang.org/x/net/websocket">WebSockets</a>, <a href="https://github.com/labstack/echo">Echo</a>, <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a>.
+    </p>
+  </li>
+</ul>
+
+<!-- FRONTEND -->
+## Frontend (Vanilla JavaScript, HTML, CSS)
 <p align="center"> <!-- CHECK -->
   <img src="readme-imgs/check.png" alt="White bishop in B5 checks black king in E8 and black king can only move to E7 and F8" width="480px"/>  
   <p align="center">
@@ -15,7 +32,7 @@ The backend is developed in Golang, with [Echo](https://github.com/labstack/echo
 <p align="center"> <!-- CHECK BLOCK -->
   <img src="readme-imgs/check_block.png" alt="White bishop in D2 is blocking check from black bishop in B4" width="480px"/>  
   <p align="center">
-    White bishop in D2 is blocking check from black bishop in B4, so the white bishop con only move in the same diagonal where both bishops are.
+    White bishop in D2 is blocking check from black bishop in B4, so the white bishop can only move in the same diagonal where both bishops are.
   </p>
 </p>
 <br>
@@ -33,8 +50,6 @@ The backend is developed in Golang, with [Echo](https://github.com/labstack/echo
   </p>
 </p>
 
-<!-- FRONTEND -->
-## Frontend (Vanilla JavaScript, HTML, CSS)
 Here we can find the following classes:
 
 <ul>
@@ -112,7 +127,7 @@ On this side, we find the following types:
   </li>
   <li> <!-- PLAYER TYPE -->
     <p>
-      <strong>Player</strong>: represents the players of a game and has color, a channel for messages, a pointer to the WebSocket connnection that links the backend to the client, a channel used to send/receive the "quit" signal and a pointer to its <i>Chess Timer</i>.
+      <strong>Player</strong>: represents the players of a game and has color, a channel for messages, a pointer to the <a href="https://pkg.go.dev/golang.org/x/net/websocket">WebSocket</a> connnection that links the backend to the client, a channel used to send/receive the "quit" signal and a pointer to its <i>Chess Timer</i>.
     </p>
     <p>
       Once a game has started, each player has 2 Goroutines associated, one for receiving messages from its client and other for sending messages to its client. When a playerA receives a message from its client, it will redirect that message to the Send Goroutine associated to the playerB through playerB channel for messages and then playerB will send it to is client.
