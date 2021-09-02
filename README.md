@@ -26,7 +26,7 @@ Here we can find the following classes:
       Internally, the board is represented with 120 squares instead of 64 (8 files by 8 ranks). Each of these squares is an integer indicating the type of piece that is on it or indicating that that cell is empty or out of the board. All these additional <i>out of board</i> squares are used to simplify and optimize the legal move calculations.
     </p>
     <p>
-      This class also provides a set of methods to access easily the piece and its type located on a given cell or set a game from a [Forsyth–Edwards Notation (FEN) string](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation).
+      This class also provides a set of methods to access easily the piece and its type located on a given cell or set a game from a <a href="https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation">Forsyth–Edwards Notation (FEN) string</a>.
     </p>
   </li>
 
@@ -68,7 +68,6 @@ Here we can find the following classes:
     </p>
   </li>
 </ul>
-
 
 # Authors
 <ul>
