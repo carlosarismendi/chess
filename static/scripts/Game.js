@@ -18,6 +18,7 @@ class Game {
   #moveAudio = null;
   #gameInitAudio = null;
   #drawRequestActive = null
+  #receiveDrawRequest = null
 
   constructor({ selector, fen_string, host = null, connPath = null, duration = 10 }) {
     this.#boardSelector = selector
@@ -86,6 +87,7 @@ class Game {
 
   acceptDraw() {
     this.#drawRequestActive = false
+    this.#receiveDrawRequest = false
 
     let detail = { title: 'Draw', body: 'You have accepted draw.' }
     window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
@@ -95,7 +97,7 @@ class Game {
   }
 
   declineDraw() {
-    this.#drawRequestActive = false
+    this.#receiveDrawRequest = false
     window.dispatchEvent(new CustomEvent("drawoffer", { detail: { hidden: true } }))
     this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.DECLINE_DRAW }))
   }
@@ -214,13 +216,18 @@ class Game {
       this.#sendWebSocketMessage(new MessageWS({ flag: FLAGS_WS.CHECKMATE }))
       this.#endGame()
     }
+
+    if(this.#receiveDrawRequest) this.declineDraw()
   }
 
   #moveSend(idxSrc, pieceSrc, idxDst, fileDst, rankDst, pieceDst, send = true) {
     this.#showLastMove(idxSrc, idxDst)
 
-    let payload = new MessageWS({ idxSrc: idxSrc, idxDst: idxDst })
-    if (send) this.#sendWebSocketMessage(payload)
+
+    if (send) {
+      let payload = new MessageWS({ idxSrc: idxSrc, idxDst: idxDst })
+      this.#sendWebSocketMessage(payload)
+    }
 
     let lastRank = pieceSrc.rank
     let lastFile = pieceSrc.file
@@ -454,6 +461,7 @@ class Game {
         detail = { title: 'Draw offer', body: 'Your opponent offered draw.' }
         window.dispatchEvent(new CustomEvent("modal", { detail: detail }))
         window.dispatchEvent(new CustomEvent("drawoffer", { detail: { hidden: false } }))
+        this.#receiveDrawRequest = true
         return
 
       case FLAGS_WS.ACCEPT_DRAW:
