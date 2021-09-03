@@ -3,29 +3,29 @@
 <!-- PLAY CHESS -->
 ## Play chess
 Do you want to play? You can find it <a href="https://go-chess.herokuapp.com/">here</a>. It is totally free and no login is required.
-This chess not only allow players to play with official chess rules but also visualize legal moves of a selected piece, the last movement made and many other functionalities such as movement sound, game beginning sound, draw offer/declination/acceptance.
+This chess not only allows players to play with official chess rules but also visualize legal moves of a selected piece, the last movement made and many other functionalities such as movement sound, game beginning sound and draw offer/declination/acceptance.
 
 ## Description
 The main goal of this project is to develop a Chess game engine in Vanilla JavaScript in order to learn and practice how to manage DOM events, objects and WebSockets communications.
 
-The backend is developed in Golang, with [Echo](https://github.com/labstack/echo). The "why" behind of using Golang as programming language for backend is to learn the language itself as well as its well-known and powerful features such as Goroutines.
+The backend is developed in Golang, with [EchoV4](https://github.com/labstack/echo). The "why" behind of using Golang as programming language for backend is to learn the language itself as well as its well-known and powerful features such as Goroutines.
 
 ## Technologies summary
 <ul>
   <li>
     <p>
-      <strong>Frontend</strong>: Vanilla JavaScript, HTML, CSS
+      <strong>Frontend</strong>: Vanilla JavaScript, Object-oriented programming, HTML, CSS
     </p>
   </li>  
   <li>
     <p>
-      <strong>Backend</strong>: <a href="https://golang.org/">Golang</a>, <a href="https://gobyexample.com/goroutines">Goroutines</a>, <a href="https://gobyexample.com/channels">Channels</a>, <a href="https://pkg.go.dev/golang.org/x/net/websocket">WebSockets</a>, <a href="https://github.com/labstack/echo">Echo</a>, <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a>.
+      <strong>Backend</strong>: <a href="https://golang.org/">Golang1.17</a>, Object-oriented programming, <a href="https://gobyexample.com/goroutines">Goroutines</a>, <a href="https://gobyexample.com/channels">Channels</a>, <a href="https://pkg.go.dev/golang.org/x/net/websocket">WebSockets</a>, <a href="https://github.com/labstack/echo">Echo</a>, <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a>.
     </p>
   </li>
 </ul>
 
 <!-- FRONTEND -->
-## Frontend (Vanilla JavaScript, HTML, CSS)
+## Frontend
 <p align="center"> <!-- CHECK -->
   <img src="readme-imgs/check.png" alt="White bishop in B5 checks black king in E8 and black king can only move to E7 and F8" width="480px"/>  
   <p align="center">
@@ -50,7 +50,7 @@ The backend is developed in Golang, with [Echo](https://github.com/labstack/echo
 <p align="center"> <!-- CANT CASTLE -->
   <img src="readme-imgs/cant_castle.png" alt="White king can not castle with H1 rook because the black queen in G4 attacking G1." width="480px"/>  
   <p align="center">
-    White king can not castle with H1 rook because the black queen in G4 attacking G1.
+    White king can not castle with H1 rook because the black queen in G4 is attacking G1.
   </p>
 </p>
 
@@ -59,7 +59,7 @@ Here we can find the following classes:
 <ul>
   <li> <!-- PIECE CLASS -->
     <p>
-      <strong>Piece</strong>: this represents both a piece in the board. It is represented by a type (pawn, bishop, knight...), file (A-Z) and rank (1-8), and color (black or white). Additionally, it contains an array where all its legal moves will be stored for each turn. This class is mainly used as a data container without any behaviour.
+      <strong>Piece</strong>: this represents a piece in the board. It has a type (pawn, bishop, knight...), file (A-Z), rank (1-8), and color (black or white). Additionally, it contains an array where all its legal moves will be stored for each turn. This class is mainly used as a data container without any behaviour.
     </p>
   </li>
 
@@ -68,11 +68,14 @@ Here we can find the following classes:
       <strong>Board</strong>: as its name says, it represents the game board. Its properties are an array with all white pieces, an array with all black pieces and an array      representing the squares.
     </p>
     <p>
-      Internally, the board is represented with 120 squares instead of 64 (8 files by 8 ranks). Each of these squares is an integer indicating the type of piece that is on it or indicating that that cell is empty or out of the board. All these additional <i>out of board</i> squares are used to simplify and optimize the legal move calculations.
-    </p>
+      Internally, the board is represented with 120 squares instead of 64 (8 files by 8 ranks). Each of these squares is an integer indicating the type of piece that is on it or indicating that that cell is empty or out of the board. All these additional <i>out of board</i> squares (1 file before the A file, 1 file after the H file, 2 ranks before 1st rank and 2 ranks after the 8th rank) are used to simplify and optimize the legal move calculations.             
+    </p>    
     <p>
-      This class also provides a set of methods to access easily the piece and its type located on a given cell or set a game from a <a href="https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation">Forsyth–Edwards Notation (FEN) string</a>.
+      This class also provides a set of methods to access easily the piece located on a given cell or set a board position from a <a href="https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation">Forsyth–Edwards Notation (FEN) string</a>.
     </p>
+    <div align="center">
+      <img src="readme-imgs/chess-120.png" alt="120 squares board representation." width="480px"/>  
+    </div
   </li>
 
   <li> <!-- TIMER CLASS -->
@@ -88,12 +91,12 @@ Here we can find the following classes:
     <ul>
       <li>
         <p>
-          <i>idxSrc</i>: when a movement is made, this value is a integer representing an index in the array of 120 squares of Board. The index is the piece that is being moved.
+          <i>idxSrc</i>: when a movement is made, this value is a integer representing an index in the array of 120 squares of Board. The index refers to the piece that is being moved.
         </p>
       </li>
       <li>
         <p>
-          <i>idxDst</i>: similarly, *idxDst* represents the index of the square where the piece is being positioned.
+          <i>idxDst</i>: similarly, <i>idxDst</i> represents the index of the square where the piece is being positioned.
         </p>
       </li>
       <li>
@@ -131,13 +134,13 @@ On this side, we find the following types:
   </li>
   <li> <!-- PLAYER TYPE -->
     <p>
-      <strong>Player</strong>: represents the players of a game and has color, a channel for messages, a pointer to the <a href="https://pkg.go.dev/golang.org/x/net/websocket">WebSocket</a> connnection that links the backend to the client, a channel used to send/receive the "quit" signal and a pointer to its <i>Chess Timer</i>.
+      <strong>Player</strong>: represents the players of a game and has color, a channel for messages, a pointer to the <a href="https://pkg.go.dev/golang.org/x/net/websocket">WebSocket</a> connnection that links the backend to the client, a channel used to send/receive the "quit" signal to the main Goroutine associated to the player (the one in charge of keeping the WebSocket alive as well as other tasks) and a pointer to its <i>Chess Timer</i>.
     </p>
     <p>
-      Once a game has started, each player has 2 Goroutines associated, one for receiving messages from its client and other for sending messages to its client. When a playerA receives a message from its client, it will redirect that message to the Send Goroutine associated to the playerB through playerB channel for messages and then playerB will send it to is client.
+      Once a game has started, each player has 3 Goroutines associated, the one described in the previous paragraph, one for receiving messages from its client and other for sending messages to its client. When a playerA receives a message from its client, it will redirect that message to the Send Goroutine associated to the playerB through playerB channel for messages and then playerB will send it to its client.
     </p>
     <p>
-      If a player receives in the message a flag indicating the end of the game (e.g. checkmate, draw, etc...), the quit channel will be filled and then all Goroutines associated to this player will be finished.
+      If a player receives a flag in the message indicating the end of the game (e.g. checkmate, draw, etc...), the quit channel will be filled and then all the Goroutines associated to this player will be finished.
     </p>
     <p>
       Otherwise, if the received message indicates that a piece has been moved, then the player will stop its timer and will start its opponent's.
@@ -148,26 +151,30 @@ On this side, we find the following types:
       <strong>Game</strong>: represents a game and contains two pointers, one for each player and a quit channel. This is in charge of updating the timers as well as sending to both players the start signal once the second player joins the game through a share link.
     </p>
     <p>
-      A game is created when a player send a request to the server of creating a new game. In this case, the server will generate a hashed token with <a href="https://en.wikipedia.org/wiki/MD5">MD5</a> and will make a create a share link with this token by appending it to the app URL. Once the share link is created, it is sent to the client who created the game and then two Goroutines will be created for this player waiting for messages and the beginning of its game.
+      A game is created when a player send a request to the server of creating a new game. In this case, the server will generate a hashed token with <a href="https://en.wikipedia.org/wiki/MD5">MD5</a> and will make a share link with this token by appending it to the app URL. Once the share link is made, it is sent to the client who created the game and then two Goroutines will be created for this player waiting for messages and the beginning of its game.
     </p>
     <p>
-      When a second player joins a game through a share link, the server will check that the given token still exists and in case it does, a signal to both clientes will be sent indicating the beginning of the game and two Goroutines will be created for this player similarly they were created for the player who created the game. Otherwise, a 404 error will be send to the client.
+      When a second player joins a game through a share link, the server will check that the given token still exists and in case it does, a signal to both clientes will be sent indicating the beginning of the game, a Goroutine will be created by Game to manage timers and two Goroutines will be created for this player similarly they were created for the player who created the game. Otherwise, a 404 error will be send to the client. 
     </p>
   </li>
   <li> <!-- GAMEMAP TYPE -->
     <p>
-      <strong>GameMap</strong>: it is a collection where all games that are being played and those that are waiting for a second player to join and begin are stored. This has two properties: a map with key of type string and a pointer of Game as value, and a <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a> instance to manage concurrent access to the map. Moreover, three methods are provided by this type: addGame(key, value), removeGame(key), getGame(key)(game, exists).
+      <strong>GameMap</strong>: it is a collection where all games that are being played and those that are waiting for a second player to join are stored. This has two properties: a map with a string as key and a pointer of Game as value, and a <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a> instance to manage concurrent access to the map. Moreover, three methods are provided by this type: addGame(key, value), removeGame(key), getGame(key)(game*, exists).
     </p>
   </li>
 </ul>
 
 <!-- HOW TO RUN -->
 # How to run the project
-If you are in a Windows machine, you just need to be located in the root folder of this project and run:
+First of all, you need to install <a href="https://golang.org/">Golang1.17</a> following the official documentation. Then, move to the root directory of this project and run:  
+```bash
+$ go get github.com/labstack/echo/v4
+```
+Then, if you are in a Windows machine:
 ```shell
 C:\user> runserver.bat
 ```
-If you are in a Linux machine, you just need to be located in the root folder of this project and run:
+If you are in a Linux machine:
 ```bash
 foo@bar:~$ go run *
 ```
