@@ -14,12 +14,12 @@ The backend is developed in Golang, with [EchoV4](https://github.com/labstack/ec
 <ul>
   <li>
     <p>
-      <strong>Frontend</strong>: Vanilla JavaScript, Object-oriented programming, HTML, CSS
+      <strong>Frontend</strong>: Vanilla JavaScript, Object-oriented programming, <a href="https://developer.mozilla.org/es/docs/Web/API/WebSocket">WebSockets</a>, HTML, CSS
     </p>
   </li>  
   <li>
     <p>
-      <strong>Backend</strong>: <a href="https://golang.org/">Golang1.17</a>, Object-oriented programming, <a href="https://gobyexample.com/goroutines">Goroutines</a>, <a href="https://gobyexample.com/channels">Channels</a>, <a href="https://pkg.go.dev/golang.org/x/net/websocket">WebSockets</a>, <a href="https://github.com/labstack/echo">Echo</a>, <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a>.
+      <strong>Backend</strong>: <a href="https://golang.org/">Golang1.17</a>, Object-oriented programming, <a href="https://gobyexample.com/goroutines">Goroutines</a>, <a href="https://gobyexample.com/channels">Channels</a>, <a href="https://pkg.go.dev/golang.org/x/net/websocket">x/net/websockets</a>, <a href="https://github.com/labstack/echo">Echo</a>, <a href="https://pkg.go.dev/sync#RWMutex">sync.RWMutex</a>.
     </p>
   </li>
 </ul>
